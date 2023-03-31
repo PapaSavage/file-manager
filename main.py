@@ -239,8 +239,8 @@ class Ui_MainWindow(object):
         selected = self.listview.selectionModel().selectedRows()
 
         for index in selected:
-            path = self.pathbar.text() + "/" + \
-                self.fileModel.data(index, self.fileModel.FileNameRole)
+            path = os.path.abspath(self.pathbar.text() + "/" +
+                                   self.fileModel.data(index, self.fileModel.FileNameRole))
             # print(path, "copied to clipboard")
             self.copyList.append(path)
             self.clip.setText('\n'.join(self.copyList))
@@ -252,8 +252,8 @@ class Ui_MainWindow(object):
     def pasteitem(self):
         for i in self.copyList:
             target = i
-            destination = self.pathbar.text() + "/" + \
-                QtCore.QFileInfo(target).fileName()
+            destination = os.path.abspath(self.pathbar.text() + "/" +
+                                          QtCore.QFileInfo(target).fileName())
             # print("%s %s %s" % (target, "will be pasted to", destination))
             try:
                 shutil.copytree(target, destination)
@@ -290,7 +290,9 @@ class Ui_MainWindow(object):
     def renameLIST(self):
         if self.listview.hasFocus():
             self.fileModel.setReadOnly(False)
-            d = str(self.fileModel.filePath(
+            d = os.path.abspath(self.fileModel.filePath(
+                self.listview.selectionModel().currentIndex()))
+            print(self.fileModel.filePath(
                 self.listview.selectionModel().currentIndex()))
             ix = self.fileModel.index(d)
             QtCore.QTimer.singleShot(
@@ -302,9 +304,8 @@ class Ui_MainWindow(object):
     def renameTREE(self):
         index = self.treeview.selectionModel().currentIndex()
         path = self.dirModel.fileInfo(index).absoluteFilePath()
-        d = str(path)
 
-        ix = self.dirModel.index(d)
+        ix = self.dirModel.index(path)
         QtCore.QTimer.singleShot(
             0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
         QtCore.QTimer.singleShot(0, lambda ix=ix: self.treeview.edit(ix))
@@ -313,14 +314,15 @@ class Ui_MainWindow(object):
         try:
             if self.listview.hasFocus():
                 self.fileModel.setReadOnly(False)
-                if not os.path.exists(self.pathbar.text() + '/New folder'):
-                    os.mkdir(self.pathbar.text() + '/New folder')
-                ix = self.fileModel.index(self.pathbar.text() + '/New folder')
+                dest = os.path.abspath(self.pathbar.text() + '/New folder')
+                if not os.path.exists(dest):
+                    os.mkdir(dest)
+                ix = self.fileModel.index(dest)
                 QtCore.QTimer.singleShot(
                     0, lambda ix=ix: self.listview.setCurrentIndex(ix))
                 QtCore.QTimer.singleShot(
                     0, lambda ix=ix: self.listview.edit(ix))
-                ix = self.fileModel.index(self.pathbar.text())
+                ix = self.fileModel.index(os.path.abspath(self.pathbar.text()))
                 self.listview.setCurrentIndex(ix)
             elif self.treeview.hasFocus():
                 self.NewFolderTREE()
@@ -331,14 +333,15 @@ class Ui_MainWindow(object):
     def NewFolderTREE(self):
         try:
             self.dirModel.setReadOnly(False)
-            if not os.path.exists(self.pathbar.text() + '/New folder'):
-                os.mkdir(self.pathbar.text() + '/New folder')
-            ix = self.dirModel.index(self.pathbar.text() + '/New folder')
+            dest = os.path.abspath(self.pathbar.text() + '/New folder')
+            if not os.path.exists(dest):
+                os.mkdir(dest)
+            ix = self.dirModel.index(dest)
             QtCore.QTimer.singleShot(
                 0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
             QtCore.QTimer.singleShot(
                 0, lambda ix=ix: self.treeview.edit(ix))
-            ix = self.dirModel.index(self.pathbar.text())
+            ix = self.dirModel.index(os.path.abspath(self.pathbar.text()))
             self.treeview.setCurrentIndex(ix)
         except:
             pass
@@ -371,7 +374,11 @@ class Ui_MainWindow(object):
         try:
             self.listview.selectionModel().clearSelection()
             self.treeview.selectionModel().clearSelection()
-            newpath = self.path_go_up(self.pathbar.text())
+            # newpath = self.path_go_up(self.pathbar.text())
+
+            newpath = os.path.dirname(self.pathbar.text()) if len(
+                self.pathbar.text()) > 3 else ""
+
             # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
             self.listview.setRootIndex(
                 self.fileModel.setRootPath(newpath))
@@ -381,38 +388,6 @@ class Ui_MainWindow(object):
             self.treeview.selectionModel().clearSelection()
         except:
             pass
-
-        # if self.check == 0:
-        #     if self.double_check == 1:
-        #         self.listview.setRootIndex(
-        #             self.fileModel.index(""))
-
-        #     else:
-        #         index = self.listview.selectionModel().currentIndex()
-        #         self.back_path = self.fileModel.fileInfo(index).path()
-        #         self.listview.setRootIndex(
-        #             self.fileModel.index(self.back_path))
-        #         self.listview.selectionModel().clearSelection()
-        #         self.check += 1
-        #         self.double_check = 0
-        #     self.row_for_back(self.back_path)
-
-        # else:
-        #     if len(self.back_path) == 3:
-        #         self.listview.setRootIndex(
-        #             self.fileModel.index(""))
-        #         self.back_path = ""
-        #     else:
-        #         self.back_path = self.back_path[:len(
-        #             self.back_path)-self.count_path(self.back_path)]
-        #         self.listview.setRootIndex(
-        #             self.fileModel.index(self.back_path))
-        #     if self.back_path == "":
-        #         self.check = 0
-        #         self.double_check = 1
-        #     self.listview.selectionModel().clearSelection()
-        #     self.row_for_back(self.back_path + "/" if len(
-        #         self.back_path) == 2 else self.back_path)
 
     def back_click(self):
         self.spisik_path()
@@ -514,29 +489,8 @@ class Ui_MainWindow(object):
             self.listview.setCurrentIndex(self.fileModel.setRootPath(path))
         else:
             self.listview.setRootIndex(self.fileModel.setRootPath(path))
-            # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
-            # self.treeview.setFocusPolicy(QtCore.Qt.NoFocus)
             self.listview.setFocus()
             self.getRowCount()
-        # self.fileModel.setReadOnly(False)
-
-    def path_go_up(self, p):
-        k = ""
-        for i in range(len(p)-1, -1, -1):
-            if p[i] == "/":
-                k += p[i]
-                break
-            k += p[i]
-
-        if len(k) == len(p):
-            res = ""
-        else:
-            res = p[:-(len(k))]
-        if len(p) == 3:
-            res = ""
-        if len(res) == 2:
-            res += "/"
-        return (res)
 
     def spisik_path(self):
         for i in range(len(self.path_for_backButton)):
@@ -544,6 +498,7 @@ class Ui_MainWindow(object):
                 if self.path_for_backButton[i] == self.path_for_backButton[i+1]:
                     self.path_for_backButton.remove(
                         self.path_for_backButton[i])
+
             except:
                 pass
 
