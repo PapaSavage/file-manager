@@ -373,8 +373,10 @@ class Ui_MainWindow(object):
     def goUp_click(self):
         try:
             self.listview.selectionModel().clearSelection()
-            self.treeview.selectionModel().clearSelection()
+            # self.treeview.selectionModel().clearSelection()
             # newpath = self.path_go_up(self.pathbar.text())
+
+            print(self.pathbar.text())
 
             newpath = os.path.dirname(self.pathbar.text()) if len(
                 self.pathbar.text()) > 3 else ""
@@ -385,7 +387,7 @@ class Ui_MainWindow(object):
 
             self.row_for_back(newpath)
             self.listview.selectionModel().clearSelection()
-            self.treeview.selectionModel().clearSelection()
+            # self.treeview.selectionModel().clearSelection()
         except:
             pass
 
@@ -408,8 +410,8 @@ class Ui_MainWindow(object):
 
     def getRowCount(self):
         index = self.listview.selectionModel().currentIndex()
-        path1 = QtCore.QDir(self.fileModel.fileInfo(index).absoluteFilePath())
-        count = len(path1.entryList(QtCore.QDir.Files))
+        path = QtCore.QDir(self.fileModel.fileInfo(index).absoluteFilePath())
+        count = len(path.entryList(QtCore.QDir.Files))
 
         index_for_checker = self.listview.selectionModel().currentIndex()
         check = self.fileModel.fileInfo(index_for_checker).absoluteFilePath()
@@ -417,8 +419,7 @@ class Ui_MainWindow(object):
         if check == "":
             count = 0
 
-        self.statusbar.showMessage("%s %s" %
-                                   (count, "Files"), 0)
+        self.statusbar.showMessage(f"{count} files", 0)
 
         self.pathbar_dest(check)
 
@@ -432,8 +433,7 @@ class Ui_MainWindow(object):
         index_for_checker = self.treeview.selectionModel().currentIndex()
         check = self.dirModel.fileInfo(index_for_checker).absoluteFilePath()
 
-        self.statusbar.showMessage("%s %s" %
-                                   (count, "Files"), 0)
+        self.statusbar.showMessage(f"{count} files", 0)
 
         self.pathbar_dest(check)
 
@@ -446,8 +446,7 @@ class Ui_MainWindow(object):
         if path == "":
             count = 0
 
-        self.statusbar.showMessage("%s %s" %
-                                   (count, "Files"), 0)
+        self.statusbar.showMessage(f"{count} files", 0)
 
         self.pathbar_dest(path)
 
@@ -466,21 +465,10 @@ class Ui_MainWindow(object):
 
         self.getRowCount_tree()
 
-    def count_path(self, p):
-        k = ""
-        for i in range(len(p)-1, -1, -1):
-            if p[i] == "/":
-                k += p[i]
-                break
-            k += p[i]
-        return (len(k))
-
     def list_doubleClicked(self):
         self.fileModel.setReadOnly(True)
         index = self.listview.selectionModel().currentIndex()
         path = self.fileModel.fileInfo(index).absoluteFilePath()
-        # self.check = 0
-        # self.double_check = 0
         self.path_for_backButton.append(path[:len(
             path)-self.count_path(path)])
 
@@ -501,6 +489,15 @@ class Ui_MainWindow(object):
 
             except:
                 pass
+
+    def count_path(self, p):
+        k = ""
+        for i in range(len(p)-1, -1, -1):
+            if p[i] == "/":
+                k += p[i]
+                break
+            k += p[i]
+        return (len(k))
 
 
 def mystylesheetdark(self):
