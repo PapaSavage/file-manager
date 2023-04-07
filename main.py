@@ -285,24 +285,28 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             print(self.copyList)
 
     def pasteitem(self):
-        for i in self.copyList:
-            target = i
-            if self.listview.hasFocus:
+
+        if self.listview.hasFocus:
+            for i in self.copyList:
+                target = i
                 destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
                     self.listview.selectionModel().currentIndex())) + "/" +
                     QtCore.QFileInfo(target).fileName())
-            try:
-                shutil.copytree(target, destination)
-            except OSError as e:
-                if e.errno == errno.ENOTDIR:
-                    shutil.copy(target, destination)
+                try:
+                    shutil.copytree(target, destination)
+                except OSError as e:
+                    if e.errno == errno.ENOTDIR:
+                        shutil.copy(target, destination)
 
-                # def copyFolder(self):
-                #     index = self.treeview.selectionModel().currentIndex()
-                #     folderpath = self.dirModel.fileInfo(index).absoluteFilePath()
-                #     print("%s\n%s" % ("folderpath copied:", folderpath))
-                #     self.folder_copied = folderpath
-                #     self.copyList = []
+        elif self.treeview.hasFocus:
+            for i in self.copyList:
+                target = i
+                destination = os.path.abspath(self.pathbar.text())
+                try:
+                    shutil.copytree(target, destination)
+                except OSError as e:
+                    if e.errno == errno.ENOTDIR:
+                        shutil.copy(target, destination)
 
     def switchtheme(self):
         if self.theme == 0:
