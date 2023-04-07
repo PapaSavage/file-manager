@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QCursor
 import os
 import sys
 import subprocess
@@ -6,17 +7,19 @@ import shutil
 import errno
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QMainWindow):
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+    def __init__(self):
+        super().__init__()
 
-        MainWindow.setStyleSheet(mystylesheetdark(self))
+        self.setObjectName("MainWindow")
+        self.resize(800, 600)
+
+        self.setStyleSheet(mystylesheetdark(self))
 
         self.hiddenEnabled = False
-        self.clip = QtWidgets.QApplication.clipboard()
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        # self.clip = QtWidgets.QApplication.clipboard()
+        self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
 
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -73,16 +76,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
-        MainWindow.setCentralWidget(self.centralwidget)
+        self.setCentralWidget(self.centralwidget)
 
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar = QtWidgets.QMenuBar(self)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
+        self.setMenuBar(self.menubar)
 
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        self.setStatusBar(self.statusbar)
 
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
@@ -154,6 +157,7 @@ class Ui_MainWindow(object):
         # self.listview.setSelectionMode(
         #     QtWidgets.QAbstractItemView.ExtendedSelection)
         self.listview.doubleClicked.connect(self.list_doubleClicked)
+        self.treeview.doubleClicked.connect(self.tree_doubleClicked)
         # Устанавливаем свой фокус для проводника
         # self.listview.setFocusPolicy(QtCore.Qt.NoFocus)
         self.listview.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
@@ -200,12 +204,38 @@ class Ui_MainWindow(object):
         self.check = 0
         self.double_check = 0
         self.theme = 0
+        # self.treeview.setFocus()
         self.getRowCount()
+
+    def contextMenuEvent(self, event):
+
+        if self.listview.hasFocus():
+            self.menu = QtWidgets.QMenu(self.listview)
+            if not self.listview.selectionModel().hasSelection():
+                self.menu.addAction(self.pasteAction)
+                self.menu.addAction(self.NewFolderAction)
+            elif self.listview.selectionModel().hasSelection():
+                self.menu.addAction(self.copyAction)
+                self.menu.addAction(self.delAction)
+                self.menu.addAction(self.NewFolderAction)
+                self.menu.addAction(self.pasteAction)
+                self.menu.addAction(self.RenameAction)
+            self.menu.popup(QCursor.pos())
+        ######### treeview ############
+        elif self.treeview.hasFocus():
+            self.menu = QtWidgets.QMenu(self.treeview)
+            if not self.treeview.selectionModel().hasSelection():
+                self.menu.addAction(self.pasteAction)
+            elif self.treeview.selectionModel().hasSelection():
+                self.menu.addAction(self.pasteAction)
+                self.menu.addAction(self.copyAction)
+                self.menu.addAction(self.RenameAction)
+            self.menu.popup(QCursor.pos())
 
     def _createContextMenu(self):
         # Setting contextMenuPolicy
-        self.listview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        self.treeview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        # self.listview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        # self.treeview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         # Populating the widget with actions
         self.listview.addAction(self.RenameAction)
         self.listview.addAction(self.NewFolderAction)
@@ -221,9 +251,10 @@ class Ui_MainWindow(object):
         self.RenameAction = QtWidgets.QAction(
             "Rename", triggered=self.renameLIST)
         self.RenameAction.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
+        self.RenameAction.setShortcutVisibleInContextMenu(True)
         self.NewFolderAction = QtWidgets.QAction(
             "New Folder", triggered=self.NewFolderLIST)
-        self.NewFolderAction.setShortcut(QtGui.QKeySequence("Ctrl+N"))
+        self.NewFolderAction.setShortcut(QtGui.QKeySequence("Ctrl+n"))
         self.delAction = QtWidgets.QAction(
             "Delete File",  triggered=self.deleteFile)
         self.delAction.setShortcut(QtGui.QKeySequence("Del"))
@@ -233,46 +264,50 @@ class Ui_MainWindow(object):
             "Paste",  triggered=self.pasteitem)
 
     def copyitem(self):
-        self.copyList = []
-        # index = self.listview.selectionModel().currentIndex()
-        # folderpath = self.fileModel.fileInfo(index).absoluteFilePath()
-        selected = self.listview.selectionModel().selectedRows()
+        if self.listview.hasFocus():
+            self.copyList = []
+            selected = self.listview.selectionModel().selectedRows()
 
-        for index in selected:
-            path = os.path.abspath(self.pathbar.text() + "/" +
-                                   self.fileModel.data(index, self.fileModel.FileNameRole))
-            # print(path, "copied to clipboard")
-            self.copyList.append(path)
-            self.clip.setText('\n'.join(self.copyList))
+            for index in selected:
+                path = os.path.abspath(self.pathbar.text() + "/" +
+                                       self.fileModel.data(index, self.fileModel.FileNameRole))
+                self.copyList.append(path)
+                # self.clip.setText('\n'.join(self.copyList))
+            print(self.copyList)
+        elif self.treeview.hasFocus():
+            self.copyList = []
+            selected = self.treeview.selectionModel().selectedRows()
 
-        # print("%s\n%s" % ("folderpath copied:", folderpath))
-        # self.folder_copied = folderpath
-        # self.copyList.append(self.folder_copied)
+            for index in selected:
+                path = os.path.abspath(self.pathbar.text())
+                self.copyList.append(path)
+
+            print(self.copyList)
 
     def pasteitem(self):
         for i in self.copyList:
             target = i
-            destination = os.path.abspath(self.pathbar.text() + "/" +
-                                          QtCore.QFileInfo(target).fileName())
-            # print("%s %s %s" % (target, "will be pasted to", destination))
+            if self.listview.hasFocus:
+                destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
+                    self.listview.selectionModel().currentIndex())) + "/" +
+                    QtCore.QFileInfo(target).fileName())
             try:
                 shutil.copytree(target, destination)
             except OSError as e:
-                # If the error was caused because the source wasn't a directory
                 if e.errno == errno.ENOTDIR:
                     shutil.copy(target, destination)
 
-    # def copyFolder(self):
-    #     index = self.treeview.selectionModel().currentIndex()
-    #     folderpath = self.dirModel.fileInfo(index).absoluteFilePath()
-    #     print("%s\n%s" % ("folderpath copied:", folderpath))
-    #     self.folder_copied = folderpath
-    #     self.copyList = []
+                # def copyFolder(self):
+                #     index = self.treeview.selectionModel().currentIndex()
+                #     folderpath = self.dirModel.fileInfo(index).absoluteFilePath()
+                #     print("%s\n%s" % ("folderpath copied:", folderpath))
+                #     self.folder_copied = folderpath
+                #     self.copyList = []
 
     def switchtheme(self):
         if self.theme == 0:
 
-            MainWindow.setStyleSheet(mystylesheetlight(self))
+            self.setStyleSheet(mystylesheetlight(self))
             self.theme += 1
 
             icon = QtGui.QIcon()
@@ -280,7 +315,7 @@ class Ui_MainWindow(object):
                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         elif self.theme == 1:
-            MainWindow.setStyleSheet(mystylesheetdark(self))
+            self.setStyleSheet(mystylesheetdark(self))
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -292,8 +327,8 @@ class Ui_MainWindow(object):
             self.fileModel.setReadOnly(False)
             d = os.path.abspath(self.fileModel.filePath(
                 self.listview.selectionModel().currentIndex()))
-            print(self.fileModel.filePath(
-                self.listview.selectionModel().currentIndex()))
+            # print(self.fileModel.filePath(
+            #     self.listview.selectionModel().currentIndex()))
             ix = self.fileModel.index(d)
             QtCore.QTimer.singleShot(
                 0, lambda ix=ix: self.listview.setCurrentIndex(ix))
@@ -376,7 +411,7 @@ class Ui_MainWindow(object):
             # self.treeview.selectionModel().clearSelection()
             # newpath = self.path_go_up(self.pathbar.text())
 
-            print(self.pathbar.text())
+            # print(self.pathbar.text())
 
             newpath = os.path.dirname(self.pathbar.text()) if len(
                 self.pathbar.text()) > 3 else ""
@@ -384,6 +419,9 @@ class Ui_MainWindow(object):
             # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
             self.listview.setRootIndex(
                 self.fileModel.setRootPath(newpath))
+
+            self.path_for_backButton.append(
+                "" if self.pathbar.text() == "Drives" else self.pathbar.text())
 
             self.row_for_back(newpath)
             self.listview.selectionModel().clearSelection()
@@ -394,11 +432,13 @@ class Ui_MainWindow(object):
     def back_click(self):
         self.spisik_path()
         try:
+
             backup = self.path_for_backButton.pop()
             self.listview.setRootIndex(
                 self.fileModel.index(backup))
             self.row_for_back(backup + "/" if len(
                 backup) == 2 else backup)
+
         except:
             self.listview.setRootIndex(
                 self.fileModel.index(""))
@@ -453,27 +493,38 @@ class Ui_MainWindow(object):
         return count
 
     def on_selectionChanged(self):
+        index = self.treeview.selectionModel().currentIndex()
+        path = self.dirModel.fileInfo(index).absoluteFilePath()
+        # print(path)
+        self.listview.setRootIndex(self.fileModel.setRootPath(path))
+        self.currentPath = path
+        if not self.dirModel.fileInfo(index).isDir():
+            pass
+        self.treeview.setFocus()
+        # self.listview.clearFocus()
 
+        self.path_for_backButton.append(
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
+
+        self.getRowCount_tree()
+
+    def tree_doubleClicked(self):
         index = self.treeview.selectionModel().currentIndex()
         path = self.dirModel.fileInfo(index).absoluteFilePath()
         self.listview.setRootIndex(self.fileModel.setRootPath(path))
         self.currentPath = path
         if not self.dirModel.fileInfo(index).isDir():
             os.startfile(str(path))
-        self.treeview.setFocus()
-        self.listview.clearFocus()
-
-        self.getRowCount_tree()
 
     def list_doubleClicked(self):
         self.fileModel.setReadOnly(True)
         index = self.listview.selectionModel().currentIndex()
         path = self.fileModel.fileInfo(index).absoluteFilePath()
-        self.path_for_backButton.append(path[:len(
-            path)-self.count_path(path)])
+        self.path_for_backButton.append(
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
 
         if not self.fileModel.fileInfo(index).isDir():
-            os.startfile(str(path))
+            os.startfile(os.path.abspath(path))
             self.listview.setCurrentIndex(self.fileModel.setRootPath(path))
         else:
             self.listview.setRootIndex(self.fileModel.setRootPath(path))
@@ -711,15 +762,13 @@ background: grey;
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
+    MainWindow = Ui_MainWindow()
     MainWindow.show()
 
-    ui.listview.setRootIndex(
-        ui.fileModel.index(""))
-    ui.treeview.setRootIndex(
-        ui.dirModel.index(""))
+    MainWindow.listview.setRootIndex(
+        MainWindow.fileModel.index(""))
+    MainWindow.treeview.setRootIndex(
+        MainWindow.dirModel.index(""))
 
     MainWindow.setWindowTitle("FileManager")
     sys.exit(app.exec_())
