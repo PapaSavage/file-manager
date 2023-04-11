@@ -94,20 +94,34 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.horizontalLayout_3.addItem(spacerItem)
         self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
 
+        # button for change the theme
         self.pushButton_4.setMinimumSize(QtCore.QSize(25, 25))
         self.pushButton_4.setMaximumSize(QtCore.QSize(25, 25))
         self.pushButton_4.setSizeIncrement(QtCore.QSize(0, 0))
         self.pushButton_4.setText("")
         self.pushButton_4.setObjectName("pushButton_4")
-
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
                        QtGui.QIcon.Normal)
-
         self.pushButton_4.setIcon(icon)
-
         self.pushButton_4.clicked.connect(self.switchtheme)
 
+        # button for hidden files
+        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_3.setMinimumSize(QtCore.QSize(25, 25))
+        self.pushButton_3.setMaximumSize(QtCore.QSize(25, 25))
+        self.pushButton_3.setSizeIncrement(QtCore.QSize(0, 0))
+        self.pushButton_3.setText("")
+        self.pushButton_3.setObjectName("pushButton_3")
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
+                       QtGui.QIcon.Normal)
+        self.pushButton_3.setIcon(icon)
+
+        self.pushButton_3.clicked.connect(self.hiddenitems)
+
+        self.horizontalLayout_3.addWidget(self.pushButton_3)
         self.horizontalLayout_3.addWidget(self.pushButton_4)
         self.gridLayout.addLayout(self.horizontalLayout_3, 2, 0, 1, 1)
 
@@ -214,12 +228,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             if not self.listview.selectionModel().hasSelection():
                 self.menu.addAction(self.pasteAction)
                 self.menu.addAction(self.NewFolderAction)
+                self.menu.addAction(self.hiddenAction)
             elif self.listview.selectionModel().hasSelection():
                 self.menu.addAction(self.copyAction)
                 self.menu.addAction(self.delAction)
                 self.menu.addAction(self.NewFolderAction)
                 self.menu.addAction(self.pasteAction)
                 self.menu.addAction(self.RenameAction)
+                self.menu.addAction(self.hiddenAction)
             self.menu.popup(QCursor.pos())
         ######### treeview ############
         elif self.treeview.hasFocus():
@@ -242,6 +258,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.listview.addAction(self.delAction)
         self.listview.addAction(self.copyAction)
         self.listview.addAction(self.pasteAction)
+        self.listview.addAction(self.hiddenAction)
         self.treeview.addAction(self.delAction)
         self.treeview.addAction(self.RenameAction)
         self.treeview.addAction(self.NewFolderAction)
@@ -259,11 +276,40 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             "Delete File",  triggered=self.deleteFile)
         self.delAction.setShortcut(QtGui.QKeySequence("Del"))
         self.copyAction = QtWidgets.QAction(
-            "Copy",  triggered=self.copyitem)
+            "Copy",  triggered=self.copyitems)
         self.pasteAction = QtWidgets.QAction(
             "Paste",  triggered=self.pasteitem)
 
-    def copyitem(self):
+        self.hiddenAction = QtWidgets.QAction(
+            "show hidden Files",  triggered=self.hiddenitems)
+        self.hiddenAction.setCheckable(True)
+
+    def hiddenitems(self):
+        if self.hiddenEnabled == False:
+            self.fileModel.setFilter(
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Hidden | QtCore.QDir.AllDirs | QtCore.QDir.Files)
+            self.dirModel.setFilter(
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Hidden | QtCore.QDir.AllDirs)
+            self.hiddenEnabled = True
+            self.hiddenAction.setChecked(True)
+            
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap("arrows/show.svg"),
+                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            
+        else:
+            self.fileModel.setFilter(
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs | QtCore.QDir.Files)
+            self.dirModel.setFilter(
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+            self.hiddenEnabled = False
+            self.hiddenAction.setChecked(False)
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
+                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_3.setIcon(icon)
+
+    def copyitems(self):
         if self.listview.hasFocus():
             self.copyList = []
             selected = self.listview.selectionModel().selectedRows()
@@ -633,6 +679,7 @@ QLineEdit#pathbar{
     padding: 5px;
 }
 
+
 QSplitter {
     width: 8px;
 }
@@ -740,6 +787,9 @@ QLineEdit#pathbar{
 QSplitter {
     width: 8px;
 }
+
+
+
 QScrollBar
 {
 background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #9c9c9c, stop: 1  #848484)
