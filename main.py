@@ -31,31 +31,32 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
 
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.pushButton.setMinimumSize(QtCore.QSize(25, 25))
-        self.pushButton.setText("")
+        self.backbutton = QtWidgets.QPushButton(self.centralwidget)
+        self.backbutton.setMaximumSize(QtCore.QSize(100, 100))
+        self.backbutton.setMinimumSize(QtCore.QSize(25, 25))
+        self.backbutton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("arrows/left-arrow.svg"),
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
-        self.pushButton.setIcon(icon)
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.clicked.connect(self.back_click)
+        self.backbutton.setIcon(icon)
+        self.backbutton.setObjectName("backbutton")
+        self.backbutton.clicked.connect(self.back_click)
 
-        self.horizontalLayout_2.addWidget(self.pushButton)
-        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_2.setMaximumSize(QtCore.QSize(100, 100))
-        self.pushButton_2.setMinimumSize(QtCore.QSize(25, 25))
-        self.pushButton_2.setText("")
+        self.horizontalLayout_2.addWidget(self.backbutton)
+
+        self.upbutton = QtWidgets.QPushButton(self.centralwidget)
+        self.upbutton.setMaximumSize(QtCore.QSize(100, 100))
+        self.upbutton.setMinimumSize(QtCore.QSize(25, 25))
+        self.upbutton.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap("arrows/up-arrow.svg"),
                         QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_2.setIcon(icon1)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.horizontalLayout_2.addWidget(self.pushButton_2)
+        self.upbutton.setIcon(icon1)
+        self.upbutton.setObjectName("upbutton")
+        self.horizontalLayout_2.addWidget(self.upbutton)
 
-        self.pushButton_2.clicked.connect(self.goUp_click)
+        self.upbutton.clicked.connect(self.goUp_click)
 
         self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
         self.pathbar.setMinimumSize(QtCore.QSize(20, 20))
@@ -92,37 +93,37 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem)
-        self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
+        self.themebutton = QtWidgets.QPushButton(self.centralwidget)
 
         # button for change the theme
-        self.pushButton_4.setMinimumSize(QtCore.QSize(25, 25))
-        self.pushButton_4.setMaximumSize(QtCore.QSize(25, 25))
-        self.pushButton_4.setSizeIncrement(QtCore.QSize(0, 0))
-        self.pushButton_4.setText("")
-        self.pushButton_4.setObjectName("pushButton_4")
+        self.themebutton.setMinimumSize(QtCore.QSize(25, 25))
+        self.themebutton.setMaximumSize(QtCore.QSize(25, 25))
+        self.themebutton.setSizeIncrement(QtCore.QSize(0, 0))
+        self.themebutton.setText("")
+        self.themebutton.setObjectName("themebutton")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
                        QtGui.QIcon.Normal)
-        self.pushButton_4.setIcon(icon)
-        self.pushButton_4.clicked.connect(self.switchtheme)
+        self.themebutton.setIcon(icon)
+        self.themebutton.clicked.connect(self.switchtheme)
 
         # button for hidden files
-        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_3.setMinimumSize(QtCore.QSize(25, 25))
-        self.pushButton_3.setMaximumSize(QtCore.QSize(25, 25))
-        self.pushButton_3.setSizeIncrement(QtCore.QSize(0, 0))
-        self.pushButton_3.setText("")
-        self.pushButton_3.setObjectName("pushButton_3")
+        self.hiddenbutton = QtWidgets.QPushButton(self.centralwidget)
+        self.hiddenbutton.setMinimumSize(QtCore.QSize(25, 25))
+        self.hiddenbutton.setMaximumSize(QtCore.QSize(25, 25))
+        self.hiddenbutton.setSizeIncrement(QtCore.QSize(0, 0))
+        self.hiddenbutton.setText("")
+        self.hiddenbutton.setObjectName("hiddenbutton")
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
                        QtGui.QIcon.Normal)
-        self.pushButton_3.setIcon(icon)
+        self.hiddenbutton.setIcon(icon)
 
-        self.pushButton_3.clicked.connect(self.hiddenitems)
+        self.hiddenbutton.clicked.connect(self.hiddenitems)
 
-        self.horizontalLayout_3.addWidget(self.pushButton_3)
-        self.horizontalLayout_3.addWidget(self.pushButton_4)
+        self.horizontalLayout_3.addWidget(self.hiddenbutton)
+        self.horizontalLayout_3.addWidget(self.themebutton)
         self.gridLayout.addLayout(self.horizontalLayout_3, 2, 0, 1, 1)
 
         path = ""
@@ -208,7 +209,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.verticalLayout.addWidget(self.splitter)
 
-        self.pathbar.setReadOnly(True)
+        # self.pathbar.setReadOnly(True)
 
         self._createActions()
         self._createContextMenu()
@@ -319,7 +320,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_3.setIcon(icon)
+        self.hiddenbutton.setIcon(icon)
 
     def copyitems(self):
         self.copyList = []
@@ -333,20 +334,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.copyList.append(path)
                 self.indexlist.append(index)
                 # self.clip.setText('\n'.join(self.copyList))
-            print(self.copyList)
+
         elif self.treeview.hasFocus():
-            print("copytree")
+
             selected = self.treeview.selectionModel().selectedRows()
 
             for index in selected:
                 path = os.path.abspath(self.pathbar.text())
                 self.copyList.append(path)
                 self.indexlist.append(index)
-            print(self.copyList)
 
     def pasteitemTree(self):
         if self.treeview.hasFocus:
-            print("paste tree")
+
             for target in self.copyList:
                 destination = os.path.abspath(self.pathbar.text() + "/" +
                                               QtCore.QFileInfo(target).fileName())
@@ -366,13 +366,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
                     self.listview.selectionModel().currentIndex())) + "/" +
                     QtCore.QFileInfo(target).fileName())
-                print(destination)
+
                 try:
                     shutil.copytree(target, destination)
                 except OSError as e:
                     if e.errno == errno.ENOTDIR:
                         shutil.copy(target, destination)
-            print("paste list")
 
         if self.cutchecking:
             for index in self.indexlist:
@@ -402,8 +401,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.fileModel.setReadOnly(False)
             d = os.path.abspath(self.fileModel.filePath(
                 self.listview.selectionModel().currentIndex()))
-            # print(self.fileModel.filePath(
-            #     self.listview.selectionModel().currentIndex()))
             ix = self.fileModel.index(d)
             QtCore.QTimer.singleShot(
                 0, lambda ix=ix: self.listview.setCurrentIndex(ix))
@@ -435,7 +432,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 ix = self.fileModel.index(os.path.abspath(self.pathbar.text()))
                 self.listview.setCurrentIndex(ix)
             elif self.treeview.hasFocus():
-                print("createfolder")
                 self.NewFolderTREE()
             self.listview.selectionModel.clear()
         except:
@@ -466,25 +462,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         index = self.treeview.selectionModel().currentIndex()
         delFolder = self.dirModel.fileInfo(index).absoluteFilePath()
 
-        print('Deletion confirmed.')
-        self.statusbar.showMessage("%s %s" % ("folder deleted", delFolder), 0)
         self.fileModel.remove(index)
-        print("%s %s" % ("folder deleted", delFolder))
 
     def deleteFile(self):
         # pass
         if self.listview.hasFocus():
-            print('Deletion confirmed.')
             index = self.listview.selectionModel().currentIndex()
             self.copyPath = self.fileModel.fileInfo(index).absoluteFilePath()
-            print("%s %s" % ("file deleted", self.copyPath))
-            self.statusbar.showMessage("%s %s" % (
-                "file deleted", self.copyPath), 0)
             for delFile in self.listview.selectionModel().selectedIndexes():
-                print(delFile)
                 self.fileModel.remove(delFile)
         elif self.treeview.hasFocus():
-            print("deltree")
             self.deletetree()
 
     def goUp_click(self):
@@ -492,8 +479,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.listview.selectionModel().clearSelection()
             # self.treeview.selectionModel().clearSelection()
             # newpath = self.path_go_up(self.pathbar.text())
-
-            # print(self.pathbar.text())
 
             newpath = os.path.dirname(self.pathbar.text()) if len(
                 self.pathbar.text()) > 3 else ""
@@ -577,14 +562,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def on_selectionChanged(self):
         index = self.treeview.selectionModel().currentIndex()
         path = self.dirModel.fileInfo(index).absoluteFilePath()
-        # print(path)
         self.listview.setRootIndex(self.fileModel.setRootPath(path))
         self.currentPath = path
         if not self.dirModel.fileInfo(index).isDir():
             pass
-        # self.treeview.setFocus()
         self.listview.clearFocus()
-        # self.listview.clearSelection()
         self.path_for_backButton.append(
             "" if self.pathbar.text() == "Drives" else self.pathbar.text())
         self.getRowCount_tree()
