@@ -25,11 +25,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
 
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalalignallprogram = QtWidgets.QVBoxLayout()
+        self.verticalalignallprogram.setObjectName("verticalalignallprogram")
 
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.horizontalshapka = QtWidgets.QHBoxLayout()
+        self.horizontalshapka.setObjectName("horizontalshapka")
 
         self.backbutton = QtWidgets.QPushButton(self.centralwidget)
         self.backbutton.setMaximumSize(QtCore.QSize(100, 100))
@@ -43,7 +43,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.backbutton.setObjectName("backbutton")
         self.backbutton.clicked.connect(self.back_click)
 
-        self.horizontalLayout_2.addWidget(self.backbutton)
+        self.horizontalshapka.addWidget(self.backbutton)
 
         self.upbutton = QtWidgets.QPushButton(self.centralwidget)
         self.upbutton.setMaximumSize(QtCore.QSize(100, 100))
@@ -54,16 +54,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.upbutton.setIcon(icon1)
         self.upbutton.setObjectName("upbutton")
-        self.horizontalLayout_2.addWidget(self.upbutton)
+        self.horizontalshapka.addWidget(self.upbutton)
 
         self.upbutton.clicked.connect(self.goUp_click)
 
         self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
         self.pathbar.setMinimumSize(QtCore.QSize(20, 20))
         self.pathbar.setObjectName("pathbar")
-        self.horizontalLayout_2.addWidget(self.pathbar)
+        self.horizontalshapka.addWidget(self.pathbar)
 
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.verticalalignallprogram.addLayout(self.horizontalshapka)
 
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
@@ -75,8 +75,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.listview = QtWidgets.QTreeView(self.centralwidget)
         self.listview.setObjectName("listview")
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
+        self.verticalalignallprogram.addLayout(self.horizontalLayout)
+        self.gridLayout.addLayout(self.verticalalignallprogram, 1, 0, 1, 1)
         self.setCentralWidget(self.centralwidget)
 
         self.menubar = QtWidgets.QMenuBar(self)
@@ -88,11 +88,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
 
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.horizontalfooter = QtWidgets.QHBoxLayout()
+        self.horizontalfooter.setObjectName("horizontalfooter")
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem)
+        self.horizontalfooter.addItem(spacerItem)
         self.themebutton = QtWidgets.QPushButton(self.centralwidget)
 
         # button for change the theme
@@ -122,9 +122,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.hiddenbutton.clicked.connect(self.hiddenitems)
 
-        self.horizontalLayout_3.addWidget(self.hiddenbutton)
-        self.horizontalLayout_3.addWidget(self.themebutton)
-        self.gridLayout.addLayout(self.horizontalLayout_3, 2, 0, 1, 1)
+        self.horizontalfooter.addWidget(self.hiddenbutton)
+        self.horizontalfooter.addWidget(self.themebutton)
+        self.gridLayout.addLayout(self.horizontalfooter, 2, 0, 1, 1)
 
         path = ""
         self.copyPath = ""
@@ -207,7 +207,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.splitter.addWidget(self.treeview)
         self.splitter.addWidget(self.listview)
 
-        self.verticalLayout.addWidget(self.splitter)
+        self.verticalalignallprogram.addWidget(self.splitter)
 
         # self.pathbar.setReadOnly(True)
 
