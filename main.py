@@ -394,7 +394,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
             self.theme = 0
-        self.pushButton_4.setIcon(icon)
+        self.themebutton.setIcon(icon)
 
     def renameLIST(self):
         if self.listview.hasFocus():
