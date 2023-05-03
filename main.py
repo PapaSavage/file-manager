@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtGui import QCursor, QPixmap
 import os
 import sys
 import subprocess
@@ -62,6 +63,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.pathbar.setMinimumSize(QtCore.QSize(20, 20))
         self.pathbar.setObjectName("pathbar")
         self.horizontalshapka.addWidget(self.pathbar)
+
+        # print(self.pathbar.)
 
         self.verticalalignallprogram.addLayout(self.horizontalshapka)
 
@@ -147,6 +150,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.treeview.hideColumn(3)
         self.treeview.setRootIsDecorated(True)
         # self.treeview.setFocusPolicy(QtCore.Qt.NoFocus)
+        # self.listview.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.treeview.setExpandsOnDoubleClick(True)
         self.listview.setExpandsOnDoubleClick(True)
@@ -159,6 +163,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.treeview.setDragEnabled(True)
         self.treeview.setAcceptDrops(True)
         self.treeview.setDropIndicatorShown(True)
+        self.treeview.setAnimated(True)
 
         self.listview.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -176,19 +181,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # Устанавливаем свой фокус для проводника
         # self.listview.setFocusPolicy(QtCore.Qt.NoFocus)
         self.listview.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
+        self.listview.setAnimated(True)
         self.listview.setDragEnabled(True)
         self.listview.setAcceptDrops(True)
         self.listview.setDropIndicatorShown(True)
         self.listview.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        # self.listview.setAllColumnsShowFocus(True)
 
         self.treeview.sortByColumn(0, QtCore.Qt.AscendingOrder)
 
         # Переопределение размера для колонок листа #
-
-        self.listview.header().resizeSection(0, 250)
+        self.listview.header().resizeSection(0, 150)
         self.listview.header().resizeSection(1, 80)
         self.listview.header().resizeSection(2, 80)
-
+        self.listview.header().resizeSection(3, 80)
+        # self.listview.columnWidth(50)
         ##########################################
 
         # Включение сортировки для колонок #
@@ -209,7 +216,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.verticalalignallprogram.addWidget(self.splitter)
 
-        # self.pathbar.setReadOnly(True)
+        self.pathbar.setReadOnly(True)
 
         self._createActions()
         self._createContextMenu()
@@ -223,6 +230,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.indexlist = []
         # self.treeview.setFocus()
         self.getRowCount()
+
+    def new_method(self):
+        return True
 
     def contextMenuEvent(self, event):
         if self.listview.hasFocus():
@@ -345,38 +355,48 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.indexlist.append(index)
 
     def pasteitemTree(self):
-        if self.treeview.hasFocus:
+        msg = QMessageBox.question(self, "Pasting file", "Вы желаете вставить элемент(-ы)?",
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if msg == QMessageBox.Yes:
+            if self.treeview.hasFocus:
 
-            for target in self.copyList:
-                destination = os.path.abspath(self.pathbar.text() + "/" +
-                                              QtCore.QFileInfo(target).fileName())
-                try:
-                    shutil.copytree(target, destination)
-                except OSError as e:
-                    if e.errno == errno.ENOTDIR:
-                        shutil.copy(target, destination)
-        if self.cutchecking:
-            for index in self.indexlist:
-                self.fileModel.remove(index)
-            self.cutchecking = False
+                for target in self.copyList:
+                    destination = os.path.abspath(self.pathbar.text() + "/" +
+                                                QtCore.QFileInfo(target).fileName())
+                    try:
+                        shutil.copytree(target, destination)
+                    except OSError as e:
+                        if e.errno == errno.ENOTDIR:
+                            shutil.copy(target, destination)
+            if self.cutchecking:
+                for index in self.indexlist:
+                    self.fileModel.remove(index)
+                self.cutchecking = False
+        else:
+            pass
 
     def pasteitemList(self):
-        if self.listview.hasFocus:
-            for target in self.copyList:
-                destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
-                    self.listview.selectionModel().currentIndex())) + "/" +
-                    QtCore.QFileInfo(target).fileName())
+        msg = QMessageBox.question(self, "Pasting file", "Вы желаете вставить элемент(-ы)?",
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if msg == QMessageBox.Yes:
+            if self.listview.hasFocus:
+                for target in self.copyList:
+                    destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
+                        self.listview.selectionModel().currentIndex())) + "/" +
+                        QtCore.QFileInfo(target).fileName())
 
-                try:
-                    shutil.copytree(target, destination)
-                except OSError as e:
-                    if e.errno == errno.ENOTDIR:
-                        shutil.copy(target, destination)
+                    try:
+                        shutil.copytree(target, destination)
+                    except OSError as e:
+                        if e.errno == errno.ENOTDIR:
+                            shutil.copy(target, destination)
 
-        if self.cutchecking:
-            for index in self.indexlist:
-                self.fileModel.remove(index)
-            self.cutchecking = False
+            if self.cutchecking:
+                for index in self.indexlist:
+                    self.fileModel.remove(index)
+                self.cutchecking = False
+        else:
+            pass
 
     def switchtheme(self):
         if self.theme == 0:
@@ -433,7 +453,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.listview.setCurrentIndex(ix)
             elif self.treeview.hasFocus():
                 self.NewFolderTREE()
-            self.listview.selectionModel.clear()
         except:
             pass
 
@@ -454,11 +473,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             pass
 
     def cutfile(self):
-        self.copyitems()
-        self.cutchecking = True
+        msg = QMessageBox.question(self, "Deleting file", "Вы желаете вырезать элемент(-ы)?",
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if msg == QMessageBox.Yes:
+            self.copyitems()
+            self.cutchecking = True
+        else:
+            pass
 
     def deletetree(self):
         # pass
+        
         index = self.treeview.selectionModel().currentIndex()
         delFolder = self.dirModel.fileInfo(index).absoluteFilePath()
 
@@ -466,35 +491,38 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def deleteFile(self):
         # pass
-        if self.listview.hasFocus():
-            index = self.listview.selectionModel().currentIndex()
-            self.copyPath = self.fileModel.fileInfo(index).absoluteFilePath()
-            for delFile in self.listview.selectionModel().selectedIndexes():
-                self.fileModel.remove(delFile)
-        elif self.treeview.hasFocus():
-            self.deletetree()
+
+        msg = QMessageBox.question(self, "Deleting file", "Вы желаете удалить элемент(-ы)?",
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if msg == QMessageBox.Yes:
+            if self.listview.hasFocus():
+                index = self.listview.selectionModel().currentIndex()
+                self.copyPath = self.fileModel.fileInfo(
+                    index).absoluteFilePath()
+                for delFile in self.listview.selectionModel().selectedIndexes():
+                    self.fileModel.remove(delFile)
+            elif self.treeview.hasFocus():
+                self.deletetree()
+        else:
+            pass
 
     def goUp_click(self):
-        try:
-            self.listview.selectionModel().clearSelection()
-            # self.treeview.selectionModel().clearSelection()
-            # newpath = self.path_go_up(self.pathbar.text())
+        self.listview.selectionModel().clearSelection()
+        # self.treeview.selectionModel().clearSelection()
+        # newpath = self.path_go_up(self.pathbar.text())
 
-            newpath = os.path.dirname(self.pathbar.text()) if len(
-                self.pathbar.text()) > 3 else ""
+        newpath = os.path.dirname(self.pathbar.text()) if len(
+            self.pathbar.text()) > 3 else ""
 
-            # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
-            self.listview.setRootIndex(
-                self.fileModel.setRootPath(newpath))
+        # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
+        self.listview.setRootIndex(
+            self.fileModel.setRootPath(newpath))
 
-            self.path_for_backButton.append(
-                "" if self.pathbar.text() == "Drives" else self.pathbar.text())
+        self.path_for_backButton.append(
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
 
-            self.row_for_back(newpath)
-            self.listview.selectionModel().clearSelection()
-            # self.treeview.selectionModel().clearSelection()
-        except:
-            pass
+        self.row_for_back(newpath)
+        self.listview.selectionModel().clearSelection()
 
     def back_click(self):
         self.spisik_path()
@@ -510,6 +538,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.listview.setRootIndex(
                 self.fileModel.index(""))
             self.row_for_back("")
+            self.treeview.selectionModel().clear()
+            self.listview.selectionModel().clear()
 
     def pathbar_dest(self, check):
         self.pathbar.setText(
@@ -628,11 +658,13 @@ QTreeView{
     border-radius: 10px;
     show-decoration-selected: 0;
     outline: 0;
-    selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #729fcf, stop: 1  #204a87);
+    selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FFC618, stop: 1  #204a87);
+    padding-bottom: 5px;
 }
 QTreeView::item{
-height: 22px;
+height: 25px;
 color: black;
+font-weight: 600;
 }
 
 QTreeView::item:!selected:hover {
@@ -649,7 +681,10 @@ QTreeView::item:selected:hover{
 }
 QTreeView::item::focus{
     color: black;
+    border: 0px;
 }
+
+
 
 
 
@@ -716,6 +751,25 @@ QMenu::item::selected
 {
 background: grey;
 }
+
+QMessageBox
+{
+    font-size: 16px;
+    text-align: center;
+    color: white;
+}
+
+QMessageBox QPushButton
+{
+    min-width: 70px;
+	min-height: 25px;
+}
+QMessageBox QLabel#qt_msgbox_label {
+	color: white;
+	background-color: transparent;
+	min-width: 240px;
+	min-height: 40px;
+}
     """
 
 
@@ -736,8 +790,9 @@ QTreeView{
     selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #729fcf, stop: 1  #204a87);
 }
 QTreeView::item{
-height: 22px;
+height: 25px;
 color: black;
+
 }
 
 QTreeView::item:!selected:hover {
@@ -754,6 +809,7 @@ QTreeView::item:selected:hover{
 }
 QTreeView::item::focus{
     color: black;
+    border: 0px;
 }
 
 
@@ -822,6 +878,15 @@ background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
 QMenu::item::selected
 {
 background: grey;
+}
+QMessageBox
+{
+    font-size: 10pt;
+    text-align: center;
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    color:#204a87;
 }
     """
 
