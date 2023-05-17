@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QCursor, QPixmap
+from PyQt5.QtCore import QThread, pyqtSignal, QItemSelectionModel
+from threading import Thread
 import os
 import sys
 import subprocess
@@ -8,8 +10,41 @@ import shutil
 import errno
 
 
-class Ui_MainWindow(QtWidgets.QMainWindow):
+class ClssDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(ClssDialog, self).__init__(parent)
 
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.closebutton = QtWidgets.QPushButton(self)
+        self.closebutton.setObjectName("pushButton")
+        # self.closebutton.clicked.connect(self.btnClosed)
+        self.verticalLayout.addWidget(self.closebutton)
+        self.setWindowTitle("Dialog")
+        self.closebutton.setText("Close Dialog")
+
+    # def btnClosed(self):
+    #     self.close()
+
+
+class MyLineEdit(QtWidgets.QLineEdit):
+    def focusInEvent(self, e):
+        try:
+            self.CallBack(*self.CallBackArgs)
+        except AttributeError:
+            pass
+        super().focusInEvent(e)
+
+    def SetCallBack(self, callBack):
+        self.CallBack = callBack
+        self.IsCallBack = True
+        self.CallBackArgs = []
+
+    def SetCallBackArgs(self, args):
+        self.CallBackArgs = args
+
+
+class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -37,8 +72,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.backbutton.setMinimumSize(QtCore.QSize(25, 25))
         self.backbutton.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("arrows/left-arrow.svg"),
-                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap("arrows/left-arrow.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
 
         self.backbutton.setIcon(icon)
         self.backbutton.setObjectName("backbutton")
@@ -51,17 +87,20 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.upbutton.setMinimumSize(QtCore.QSize(25, 25))
         self.upbutton.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("arrows/up-arrow.svg"),
-                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(
+            QtGui.QPixmap("arrows/up-arrow.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
         self.upbutton.setIcon(icon1)
         self.upbutton.setObjectName("upbutton")
         self.horizontalshapka.addWidget(self.upbutton)
 
         self.upbutton.clicked.connect(self.goUp_click)
 
-        self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
+        # self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
+        self.pathbar = MyLineEdit()
         self.pathbar.setMinimumSize(QtCore.QSize(20, 20))
         self.pathbar.setObjectName("pathbar")
+        # self.pathbar.SetCallBack(self.openDialog)
         self.horizontalshapka.addWidget(self.pathbar)
 
         # print(self.pathbar.)
@@ -94,7 +133,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.horizontalfooter = QtWidgets.QHBoxLayout()
         self.horizontalfooter.setObjectName("horizontalfooter")
         spacerItem = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalfooter.addItem(spacerItem)
         self.themebutton = QtWidgets.QPushButton(self.centralwidget)
 
@@ -105,8 +145,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.themebutton.setText("")
         self.themebutton.setObjectName("themebutton")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
-                       QtGui.QIcon.Normal)
+        icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"), QtGui.QIcon.Normal)
         self.themebutton.setIcon(icon)
         self.themebutton.clicked.connect(self.switchtheme)
 
@@ -119,8 +158,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.hiddenbutton.setObjectName("hiddenbutton")
 
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
-                       QtGui.QIcon.Normal)
+        icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"), QtGui.QIcon.Normal)
         self.hiddenbutton.setIcon(icon)
 
         self.hiddenbutton.clicked.connect(self.hiddenitems)
@@ -165,9 +203,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.treeview.setDropIndicatorShown(True)
         self.treeview.setAnimated(True)
 
-        self.listview.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.treeview.selectionModel().selectionChanged.connect(self.on_selectionChanged)
+        self.listview.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.treeview.selectionModel().selectionChanged.connect(
+            self.on_selectionChanged
+        )
 
         self.listview.setModel(self.fileModel)
 
@@ -205,8 +244,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         ##########################################
 
-        self.treeview.setEditTriggers(
-            QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.treeview.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.listview.setIndentation(10)
 
         self.splitter = QtWidgets.QSplitter()
@@ -231,8 +269,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # self.treeview.setFocus()
         self.getRowCount()
 
-    def new_method(self):
-        return True
+    def openDialog(self):
+        #       pass
+        dialog = ClssDialog(self)
+        dialog.exec_()
 
     def contextMenuEvent(self, event):
         if self.listview.hasFocus():
@@ -284,52 +324,61 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def _createActions(self):
         # File actions
-        self.RenameAction = QtWidgets.QAction(
-            "Rename", triggered=self.renameLIST)
+        self.RenameAction = QtWidgets.QAction("Rename", triggered=self.renameLIST)
         self.RenameAction.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
         self.RenameAction.setShortcutVisibleInContextMenu(True)
         self.NewFolderAction = QtWidgets.QAction(
-            "New Folder", triggered=self.NewFolderLIST)
+            "New Folder", triggered=self.NewFolderLIST
+        )
         self.NewFolderAction.setShortcut(QtGui.QKeySequence("Ctrl+n"))
-        self.delAction = QtWidgets.QAction(
-            "Delete File",  triggered=self.deleteFile)
+        self.delAction = QtWidgets.QAction("Delete File", triggered=self.deleteFile)
         self.delAction.setShortcut(QtGui.QKeySequence("Del"))
-        self.copyAction = QtWidgets.QAction(
-            "Copy",  triggered=self.copyitems)
-        self.pasteActionTree = QtWidgets.QAction(
-            "Paste",  triggered=self.pasteitemTree)
-        self.pasteActionList = QtWidgets.QAction(
-            "Paste",  triggered=self.pasteitemList)
+        self.copyAction = QtWidgets.QAction("Copy", triggered=self.copyitems)
+        self.pasteActionTree = QtWidgets.QAction("Paste", triggered=self.pasteitemTree)
+        self.pasteActionList = QtWidgets.QAction("Paste", triggered=self.pasteitemList)
 
         self.hiddenAction = QtWidgets.QAction(
-            "show hidden Files",  triggered=self.hiddenitems)
+            "show hidden Files", triggered=self.hiddenitems
+        )
         self.hiddenAction.setCheckable(True)
 
         self.cutAction = QtWidgets.QAction("Cut file", triggered=self.cutfile)
 
+    def openDialog(self):
+        #       pass
+        dialog = ClssDialog(self)
+        dialog.exec_()
+
     def hiddenitems(self):
         if self.hiddenEnabled == False:
             self.fileModel.setFilter(
-                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Hidden | QtCore.QDir.AllDirs | QtCore.QDir.Files)
+                QtCore.QDir.NoDotAndDotDot
+                | QtCore.QDir.Hidden
+                | QtCore.QDir.AllDirs
+                | QtCore.QDir.Files
+            )
             self.dirModel.setFilter(
-                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Hidden | QtCore.QDir.AllDirs)
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Hidden | QtCore.QDir.AllDirs
+            )
             self.hiddenEnabled = True
             self.hiddenAction.setChecked(True)
 
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap("arrows/show.svg"),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap("arrows/show.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            )
 
         else:
             self.fileModel.setFilter(
-                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs | QtCore.QDir.Files)
-            self.dirModel.setFilter(
-                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+                QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs | QtCore.QDir.Files
+            )
+            self.dirModel.setFilter(QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
             self.hiddenEnabled = False
             self.hiddenAction.setChecked(False)
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap("arrows/hide.svg"),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap("arrows/hide.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            )
         self.hiddenbutton.setIcon(icon)
 
     def copyitems(self):
@@ -339,14 +388,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             selected = self.listview.selectionModel().selectedRows()
 
             for index in selected:
-                path = os.path.abspath(self.pathbar.text() + "/" +
-                                       self.fileModel.data(index, self.fileModel.FileNameRole))
+                path = os.path.abspath(
+                    self.pathbar.text()
+                    + "/"
+                    + self.fileModel.data(index, self.fileModel.FileNameRole)
+                )
                 self.copyList.append(path)
                 self.indexlist.append(index)
                 # self.clip.setText('\n'.join(self.copyList))
 
         elif self.treeview.hasFocus():
-
             selected = self.treeview.selectionModel().selectedRows()
 
             for index in selected:
@@ -355,14 +406,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.indexlist.append(index)
 
     def pasteitemTree(self):
-        msg = QMessageBox.question(self, "Pasting file", "Вы желаете вставить элемент(-ы)?",
-                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        msg = QMessageBox.question(
+            self,
+            "Pasting file",
+            "Вы желаете вставить элемент(-ы)?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
         if msg == QMessageBox.Yes:
             if self.treeview.hasFocus:
-
                 for target in self.copyList:
-                    destination = os.path.abspath(self.pathbar.text() + "/" +
-                                                QtCore.QFileInfo(target).fileName())
+                    destination = os.path.abspath(
+                        self.pathbar.text() + "/" + QtCore.QFileInfo(target).fileName()
+                    )
                     try:
                         shutil.copytree(target, destination)
                     except OSError as e:
@@ -376,14 +432,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             pass
 
     def pasteitemList(self):
-        msg = QMessageBox.question(self, "Pasting file", "Вы желаете вставить элемент(-ы)?",
-                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        msg = QMessageBox.question(
+            self,
+            "Pasting file",
+            "Вы желаете вставить элемент(-ы)?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
         if msg == QMessageBox.Yes:
             if self.listview.hasFocus:
                 for target in self.copyList:
-                    destination = os.path.abspath(os.path.abspath(self.fileModel.filePath(
-                        self.listview.selectionModel().currentIndex())) + "/" +
-                        QtCore.QFileInfo(target).fileName())
+                    destination = os.path.abspath(
+                        os.path.abspath(
+                            self.fileModel.filePath(
+                                self.listview.selectionModel().currentIndex()
+                            )
+                        )
+                        + "/"
+                        + QtCore.QFileInfo(target).fileName()
+                    )
 
                     try:
                         shutil.copytree(target, destination)
@@ -400,30 +467,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def switchtheme(self):
         if self.theme == 0:
-
             self.setStyleSheet(mystylesheetlight(self))
             self.theme += 1
 
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap("arrows/moon.svg"),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap("arrows/moon.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            )
 
         elif self.theme == 1:
             self.setStyleSheet(mystylesheetdark(self))
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap("arrows/sun-shape.svg"),
+                QtGui.QIcon.Normal,
+                QtGui.QIcon.Off,
+            )
             self.theme = 0
         self.themebutton.setIcon(icon)
 
     def renameLIST(self):
         if self.listview.hasFocus():
             self.fileModel.setReadOnly(False)
-            d = os.path.abspath(self.fileModel.filePath(
-                self.listview.selectionModel().currentIndex()))
+            d = os.path.abspath(
+                self.fileModel.filePath(self.listview.selectionModel().currentIndex())
+            )
             ix = self.fileModel.index(d)
-            QtCore.QTimer.singleShot(
-                0, lambda ix=ix: self.listview.setCurrentIndex(ix))
+            QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview.setCurrentIndex(ix))
             QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview.edit(ix))
         elif self.treeview.hasFocus():
             self.renameTREE()
@@ -433,22 +503,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         path = self.dirModel.fileInfo(index).absoluteFilePath()
 
         ix = self.dirModel.index(path)
-        QtCore.QTimer.singleShot(
-            0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
+        QtCore.QTimer.singleShot(0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
         QtCore.QTimer.singleShot(0, lambda ix=ix: self.treeview.edit(ix))
 
     def NewFolderLIST(self):
         try:
             if self.listview.hasFocus():
                 self.fileModel.setReadOnly(False)
-                dest = os.path.abspath(self.pathbar.text() + '/New folder')
+                dest = os.path.abspath(self.pathbar.text() + "/New folder")
                 if not os.path.exists(dest):
                     os.mkdir(dest)
                 ix = self.fileModel.index(dest)
                 QtCore.QTimer.singleShot(
-                    0, lambda ix=ix: self.listview.setCurrentIndex(ix))
-                QtCore.QTimer.singleShot(
-                    0, lambda ix=ix: self.listview.edit(ix))
+                    0, lambda ix=ix: self.listview.setCurrentIndex(ix)
+                )
+                QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview.edit(ix))
                 ix = self.fileModel.index(os.path.abspath(self.pathbar.text()))
                 self.listview.setCurrentIndex(ix)
             elif self.treeview.hasFocus():
@@ -459,22 +528,26 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def NewFolderTREE(self):
         try:
             self.dirModel.setReadOnly(False)
-            dest = os.path.abspath(self.pathbar.text() + '/New folder')
+            dest = os.path.abspath(self.pathbar.text() + "/New folder")
             if not os.path.exists(dest):
                 os.mkdir(dest)
             ix = self.dirModel.index(dest)
-            QtCore.QTimer.singleShot(
-                0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
-            QtCore.QTimer.singleShot(
-                0, lambda ix=ix: self.treeview.edit(ix))
+            # QtCore.QTimer.singleShot(
+            #     0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
+            QtCore.QTimer.singleShot(0, lambda ix=ix: self.treeview.edit(ix))
             ix = self.dirModel.index(os.path.abspath(self.pathbar.text()))
             self.treeview.setCurrentIndex(ix)
         except:
             pass
 
     def cutfile(self):
-        msg = QMessageBox.question(self, "Deleting file", "Вы желаете вырезать элемент(-ы)?",
-                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        msg = QMessageBox.question(
+            self,
+            "Deleting file",
+            "Вы желаете вырезать элемент(-ы)?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
         if msg == QMessageBox.Yes:
             self.copyitems()
             self.cutchecking = True
@@ -483,67 +556,72 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def deletetree(self):
         # pass
-        
+
         index = self.treeview.selectionModel().currentIndex()
         delFolder = self.dirModel.fileInfo(index).absoluteFilePath()
 
-        self.fileModel.remove(index)
+        msg = QMessageBox.question(
+            self,
+            "Deleting file",
+            f"""Вы желаете удалить элемент(-ы) {self.dirModel.fileName(index)}?""",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
 
-    def deleteFile(self):
-        # pass
-
-        msg = QMessageBox.question(self, "Deleting file", "Вы желаете удалить элемент(-ы)?",
-                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if msg == QMessageBox.Yes:
-            if self.listview.hasFocus():
-                index = self.listview.selectionModel().currentIndex()
-                self.copyPath = self.fileModel.fileInfo(
-                    index).absoluteFilePath()
-                for delFile in self.listview.selectionModel().selectedIndexes():
-                    self.fileModel.remove(delFile)
-            elif self.treeview.hasFocus():
-                self.deletetree()
+            self.fileModel.remove(index)
         else:
             pass
 
+    def deleteFile(self):
+        if self.listview.hasFocus():
+            index = self.listview.selectionModel().selectedIndexes()
+
+            msg = QMessageBox.question(
+                self,
+                "Deleting file",
+                f"Вы желаете удалить элемент(-ы)?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            # self.copyPath = self.fileModel.fileInfo(
+            #     index).absoluteFilePath()
+            if msg == QMessageBox.Yes:
+                for delFile in self.listview.selectionModel().selectedIndexes():
+                    self.fileModel.remove(delFile)
+            else:
+                pass
+        elif self.treeview.hasFocus():
+            self.deletetree()
+
     def goUp_click(self):
         self.listview.selectionModel().clearSelection()
-        # self.treeview.selectionModel().clearSelection()
-        # newpath = self.path_go_up(self.pathbar.text())
-
-        newpath = os.path.dirname(self.pathbar.text()) if len(
-            self.pathbar.text()) > 3 else ""
+        newpath = (
+            os.path.dirname(self.pathbar.text()) if len(self.pathbar.text()) > 3 else ""
+        )
 
         # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
-        self.listview.setRootIndex(
-            self.fileModel.setRootPath(newpath))
+        self.listview.setRootIndex(self.fileModel.setRootPath(newpath))
 
         self.path_for_backButton.append(
-            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
-
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text()
+        )
         self.row_for_back(newpath)
-        self.listview.selectionModel().clearSelection()
 
     def back_click(self):
-        self.spisik_path()
+        self.list_clear()
         try:
-
             backup = self.path_for_backButton.pop()
-            self.listview.setRootIndex(
-                self.fileModel.index(backup))
-            self.row_for_back(backup + "/" if len(
-                backup) == 2 else backup)
+            self.listview.setRootIndex(self.fileModel.index(backup))
+            self.row_for_back(backup + "/" if len(backup) == 2 else backup)
 
         except:
-            self.listview.setRootIndex(
-                self.fileModel.index(""))
+            self.listview.setRootIndex(self.fileModel.index(""))
             self.row_for_back("")
-            self.treeview.selectionModel().clear()
-            self.listview.selectionModel().clear()
+        self.listview.clearSelection()
 
-    def pathbar_dest(self, check):
-        self.pathbar.setText(
-            check) if check != "" else self.pathbar.setText("Drives")
+    def pathbar_dest(self, path):
+        self.pathbar.setText(path if path != "" else "Drives")
 
     def getRowCount(self):
         index = self.listview.selectionModel().currentIndex()
@@ -577,8 +655,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         return count
 
     def row_for_back(self, path):
-        path1 = QtCore.QDir(path)
-        count = len(path1.entryList(QtCore.QDir.Files))
+        path_checker = QtCore.QDir(path)
+        count = len(path_checker.entryList(QtCore.QDir.Files))
 
         if path == "":
             count = 0
@@ -593,59 +671,60 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         index = self.treeview.selectionModel().currentIndex()
         path = self.dirModel.fileInfo(index).absoluteFilePath()
         self.listview.setRootIndex(self.fileModel.setRootPath(path))
-        self.currentPath = path
         if not self.dirModel.fileInfo(index).isDir():
             pass
         self.listview.clearFocus()
         self.path_for_backButton.append(
-            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text()
+        )
         self.getRowCount_tree()
 
     def tree_doubleClicked(self):
         index = self.treeview.selectionModel().currentIndex()
         path = self.dirModel.fileInfo(index).absoluteFilePath()
-        self.listview.setRootIndex(self.fileModel.setRootPath(path))
-        self.currentPath = path
+
         if not self.dirModel.fileInfo(index).isDir():
             os.startfile(str(path))
+        else:
+            self.listview.setRootIndex(self.fileModel.setRootPath(path))
 
     def list_doubleClicked(self):
         self.fileModel.setReadOnly(True)
+
         index = self.listview.selectionModel().currentIndex()
         path = self.fileModel.fileInfo(index).absoluteFilePath()
-        self.path_for_backButton.append(
-            "" if self.pathbar.text() == "Drives" else self.pathbar.text())
 
         if not self.fileModel.fileInfo(index).isDir():
             os.startfile(os.path.abspath(path))
-            self.listview.setCurrentIndex(self.fileModel.setRootPath(path))
         else:
+            self.path_for_backButton.append(
+                "" if self.pathbar.text() == "Drives" else self.pathbar.text()
+            )
+            self.treeview.setCurrentIndex(self.dirModel.index(path[:3]))
             self.listview.setRootIndex(self.fileModel.setRootPath(path))
-            # self.listview.setFocus()
             self.getRowCount()
 
-    def spisik_path(self):
+    def list_clear(self):
         for i in range(len(self.path_for_backButton)):
             try:
-                if self.path_for_backButton[i] == self.path_for_backButton[i+1]:
-                    self.path_for_backButton.remove(
-                        self.path_for_backButton[i])
+                if self.path_for_backButton[i] == self.path_for_backButton[i + 1]:
+                    self.path_for_backButton.remove(self.path_for_backButton[i])
 
             except:
                 pass
+        print(self.path_for_backButton)
 
     def count_path(self, p):
         k = ""
-        for i in range(len(p)-1, -1, -1):
+        for i in range(len(p) - 1, -1, -1):
             if p[i] == "/":
                 k += p[i]
                 break
             k += p[i]
-        return (len(k))
+        return len(k)
 
 
 def mystylesheetdark(self):
-
     return """
 
 QWidget{
@@ -668,25 +747,21 @@ font-weight: 600;
 }
 
 QTreeView::item:!selected:hover {
-	background: #a1a1a1;
+    background: #a1a1a1;
 }
 
 QTreeView::item:selected:!hover{
-	background: #8f8f8f;
+    background: #8f8f8f;
 }
 
 QTreeView::item:selected:hover{
     border: 0px;
-	background: #9e9e9e;
+    background: #9e9e9e;
 }
 QTreeView::item::focus{
     color: black;
     border: 0px;
 }
-
-
-
-
 
 QHeaderView::section{
     font-size: 13px;
@@ -738,14 +813,14 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #9c9c9c, s
 QMenu
 {
 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
 }
 QMenu
 {
 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
 }
 QMenu::item::selected
 {
@@ -762,145 +837,151 @@ QMessageBox
 QMessageBox QPushButton
 {
     min-width: 70px;
-	min-height: 25px;
+    min-height: 25px;
 }
 QMessageBox QLabel#qt_msgbox_label {
-	color: white;
-	background-color: transparent;
-	min-width: 240px;
-	min-height: 40px;
+    color: white;
+    background-color: transparent;
+    min-width: 350px;
+    min-height: 40px;
 }
     """
 
 
 def mystylesheetlight(self):
-
     return """
 
-QWidget{
-    background-color: #dce0dd;
-}
+    QWidget{
+        background-color: #dce0dd;
+    }
 
-QTreeView{
-    border:none;
-    background-color: #ffffff;
-    border-radius: 10px;
-    show-decoration-selected: 0;
-    outline: 0;
-    selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #729fcf, stop: 1  #204a87);
-}
-QTreeView::item{
-height: 25px;
-color: black;
-
-}
-
-QTreeView::item:!selected:hover {
-	background: #ededed;
-}
-
-QTreeView::item:selected:!hover{
-	background: #ededed;
-}
-
-QTreeView::item:selected:hover{
-    border: 0px;
-	background: #ededed;
-}
-QTreeView::item::focus{
+    QTreeView{
+        border:none;
+        background-color: #ffffff;
+        border-radius: 10px;
+        show-decoration-selected: 0;
+        outline: 0;
+        selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #729fcf, stop: 1  #204a87);
+    }
+    QTreeView::item{
+    height: 25px;
     color: black;
-    border: 0px;
-}
+
+    }
+
+    QTreeView::item:!selected:hover {
+        background: #ededed;
+    }
+
+    QTreeView::item:selected:!hover{
+        background: #ededed;
+    }
+
+    QTreeView::item:selected:hover{
+        border: 0px;
+        background: #ededed;
+    }
+    QTreeView::item::focus{
+        color: black;
+        border: 0px;
+    }
 
 
 
-QHeaderView::section{
-    font-size: 13px;
-    font-weight: 500;
-}
+    QHeaderView::section{
+        font-size: 13px;
+        font-weight: 500;
+    }
 
-QPushButton{
-border-style: solid;
-border-color: darkgrey;
-background-color: #ffffff;
-font-size: 8pt;
-border-width: 1px;
-border-radius: 6px;
-border: none;
-}
-QPushButton:hover:!pressed{
-border-style: solid;
-border-color: darkgrey;
-border-width: 1px;
-border-radius: 6px;
-padding: 4px;
-}
-QPushButton:hover{
-background-color: white;
-border-style: solid;
-border-color: darkgrey;
-border-width: 1px;
-border-radius: 6px;
-}
-
-QLineEdit#pathbar{
+    QPushButton{
     border-style: solid;
     border-color: darkgrey;
+    background-color: #ffffff;
+    font-size: 8pt;
+    border-width: 1px;
     border-radius: 6px;
+    border: none;
+    }
+    QPushButton:hover:!pressed{
+    border-style: solid;
+    border-color: darkgrey;
+    border-width: 1px;
+    border-radius: 6px;
+    padding: 4px;
+    }
+    QPushButton:hover{
     background-color: white;
-    color: dark;
-    font-weight: bold;
-    padding: 5px;
-}
+    border-style: solid;
+    border-color: darkgrey;
+    border-width: 1px;
+    border-radius: 6px;
+    }
 
-QSplitter {
-    width: 8px;
-}
+    QLineEdit#pathbar{
+        border-style: solid;
+        border-color: darkgrey;
+        border-radius: 6px;
+        background-color: white;
+        color: dark;
+        font-weight: bold;
+        padding: 5px;
+    }
+
+    QSplitter {
+        width: 8px;
+    }
 
 
 
-QScrollBar
+    QScrollBar
+    {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #9c9c9c, stop: 1  #848484)
+    }
+    QMenu
+    {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                    stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                    stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    }
+    QMenu
+    {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                    stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                    stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    }
+    QMenu::item::selected
+    {
+    background: grey;
+    }
+    QMessageBox
 {
-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #9c9c9c, stop: 1  #848484)
-}
-QMenu
-{
-background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-}
-QMenu
-{
-background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-}
-QMenu::item::selected
-{
-background: grey;
-}
-QMessageBox
-{
-    font-size: 10pt;
+    font-size: 16px;
     text-align: center;
-     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-    color:#204a87;
+    color: white;
 }
-    """
+
+QMessageBox QPushButton
+{
+    min-width: 70px;
+    min-height: 25px;
+}
+QMessageBox QLabel#qt_msgbox_label {
+    color: white;
+    background-color: transparent;
+    min-width: 350px;
+    min-height: 40px;
+}
+        """
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyle('Fusion')
-    MainWindow = Ui_MainWindow()
+    app.setStyle("Fusion")
+    MainWindow = Window()
     MainWindow.show()
 
-    MainWindow.listview.setRootIndex(
-        MainWindow.fileModel.index(""))
-    MainWindow.treeview.setRootIndex(
-        MainWindow.dirModel.index(""))
+    MainWindow.listview.setRootIndex(MainWindow.fileModel.index(""))
+    MainWindow.treeview.setRootIndex(MainWindow.dirModel.index(""))
 
     MainWindow.setWindowTitle("FileManager")
     sys.exit(app.exec_())
