@@ -3,45 +3,69 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QCursor, QPixmap
 from PyQt5.QtCore import QThread, pyqtSignal, QItemSelectionModel
 from threading import Thread
+from pathlib import Path
 import os
 import sys
 import subprocess
 import shutil
 import errno
+import psutil
 
 
 class ClssDialog(QtWidgets.QDialog):
+    pathEntered = QtCore.pyqtSignal(str)
+
     def __init__(self, parent=None):
         super(ClssDialog, self).__init__(parent)
 
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.closebutton = QtWidgets.QPushButton(self)
-        self.closebutton.setObjectName("pushButton")
-        # self.closebutton.clicked.connect(self.btnClosed)
-        self.verticalLayout.addWidget(self.closebutton)
-        self.setWindowTitle("Dialog")
-        self.closebutton.setText("Close Dialog")
 
-    # def btnClosed(self):
-    #     self.close()
+        self.pathbar = QtWidgets.QLineEdit()
+        self.pathbar.setMinimumSize(QtCore.QSize(50, 20))
+        self.pathbar.setObjectName("pathbar")
 
+        # self.pathbar.setAlignment(QtCore.Qt.AlignCenter)
 
-class MyLineEdit(QtWidgets.QLineEdit):
-    def focusInEvent(self, e):
-        try:
-            self.CallBack(*self.CallBackArgs)
-        except AttributeError:
-            pass
-        super().focusInEvent(e)
+        self.verticalLayout.addWidget(self.pathbar)
 
-    def SetCallBack(self, callBack):
-        self.CallBack = callBack
-        self.IsCallBack = True
-        self.CallBackArgs = []
+        # self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        # self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-    def SetCallBackArgs(self, args):
-        self.CallBackArgs = args
+        self.pathbar.returnPressed.connect(self.handleReturnPressed)
+
+        self.setWindowTitle("Finding")
+
+    def handleReturnPressed(self):
+        if os.path.exists(self.pathbar.text()):
+            self.pathEntered.emit(self.pathbar.text())
+            self.close()
+
+        else:
+            dlg = QMessageBox()
+            dlg.setWindowTitle("Ошибка")
+            dlg.setText("Неверный адрес")
+            button = dlg.exec()
+
+            if button == QMessageBox.Ok:
+                print("Я понял")
+
+            # print(os.path.exists(self.pathbar.text()))
+
+    def showEvent(self, event):
+        super(ClssDialog, self).showEvent(event)
+        self.pathbar.setFocus()
+        self.pathbar.selectAll()
+        screen_geometry = QtWidgets.QApplication.desktop().screenGeometry()
+        dialog_geometry = self.geometry()
+        x = (screen_geometry.width() - dialog_geometry.width()) // 2
+        y = (screen_geometry.height() - dialog_geometry.height()) // 2
+        self.move(x, y)
+
+    # def showEvent(self, event):
+    #     super(ClssDialog, self).showEvent(event)
+    #     # Переместить окно в центр экрана
+    #
 
 
 class Window(QtWidgets.QMainWindow):
@@ -96,14 +120,17 @@ class Window(QtWidgets.QMainWindow):
 
         self.upbutton.clicked.connect(self.goUp_click)
 
-        # self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
-        self.pathbar = MyLineEdit()
+        self.pathbar = QtWidgets.QLineEdit(self.centralwidget)
         self.pathbar.setMinimumSize(QtCore.QSize(20, 20))
         self.pathbar.setObjectName("pathbar")
-        # self.pathbar.SetCallBack(self.openDialog)
-        self.horizontalshapka.addWidget(self.pathbar)
 
-        # print(self.pathbar.)
+        self.dialog = ClssDialog(self)
+        self.dialog.pathEntered.connect(self.handlePathEntered)
+        self.dialog.setMinimumWidth(320)
+
+        self.pathbar.mousePressEvent = self.openDialog
+
+        self.horizontalshapka.addWidget(self.pathbar)
 
         self.verticalalignallprogram.addLayout(self.horizontalshapka)
 
@@ -138,7 +165,6 @@ class Window(QtWidgets.QMainWindow):
         self.horizontalfooter.addItem(spacerItem)
         self.themebutton = QtWidgets.QPushButton(self.centralwidget)
 
-        # button for change the theme
         self.themebutton.setMinimumSize(QtCore.QSize(25, 25))
         self.themebutton.setMaximumSize(QtCore.QSize(25, 25))
         self.themebutton.setSizeIncrement(QtCore.QSize(0, 0))
@@ -148,8 +174,6 @@ class Window(QtWidgets.QMainWindow):
         icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"), QtGui.QIcon.Normal)
         self.themebutton.setIcon(icon)
         self.themebutton.clicked.connect(self.switchtheme)
-
-        # button for hidden files
         self.hiddenbutton = QtWidgets.QPushButton(self.centralwidget)
         self.hiddenbutton.setMinimumSize(QtCore.QSize(25, 25))
         self.hiddenbutton.setMaximumSize(QtCore.QSize(25, 25))
@@ -174,12 +198,10 @@ class Window(QtWidgets.QMainWindow):
 
         self.dirModel = QtWidgets.QFileSystemModel()
         self.dirModel.setReadOnly(False)
-
         self.dirModel.setRootPath(path)
 
         self.fileModel = QtWidgets.QFileSystemModel()
         self.fileModel.setReadOnly(False)
-        # self.fileModel.setResolveSymlinks(True)
         self.fileModel.setRootPath(path)
 
         self.treeview.setModel(self.dirModel)
@@ -193,7 +215,6 @@ class Window(QtWidgets.QMainWindow):
         self.treeview.setExpandsOnDoubleClick(True)
         self.listview.setExpandsOnDoubleClick(True)
 
-        # Ставим параметр табуляции для дерева катологов
         self.treeview.setIndentation(12)
         self.treeview.setTreePosition(0)
         self.treeview.setUniformRowHeights(True)
@@ -210,39 +231,25 @@ class Window(QtWidgets.QMainWindow):
 
         self.listview.setModel(self.fileModel)
 
-        # self.listview.setRootPath(QtCore.QDir.rootPath())
-
-        # self.listview.selectionModel().selectionChanged.connect(self.on_selectionChanged_1)
-        # self.listview.setSelectionMode(
-        #     QtWidgets.QAbstractItemView.ExtendedSelection)
         self.listview.doubleClicked.connect(self.list_doubleClicked)
         self.treeview.doubleClicked.connect(self.tree_doubleClicked)
-        # Устанавливаем свой фокус для проводника
-        # self.listview.setFocusPolicy(QtCore.Qt.NoFocus)
+
         self.listview.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
         self.listview.setAnimated(True)
         self.listview.setDragEnabled(True)
         self.listview.setAcceptDrops(True)
         self.listview.setDropIndicatorShown(True)
         self.listview.sortByColumn(0, QtCore.Qt.AscendingOrder)
-        # self.listview.setAllColumnsShowFocus(True)
 
         self.treeview.sortByColumn(0, QtCore.Qt.AscendingOrder)
 
-        # Переопределение размера для колонок листа #
         self.listview.header().resizeSection(0, 150)
         self.listview.header().resizeSection(1, 80)
         self.listview.header().resizeSection(2, 80)
         self.listview.header().resizeSection(3, 80)
-        # self.listview.columnWidth(50)
-        ##########################################
-
-        # Включение сортировки для колонок #
 
         self.listview.setSortingEnabled(True)
         self.treeview.setSortingEnabled(True)
-
-        ##########################################
 
         self.treeview.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.listview.setIndentation(10)
@@ -266,13 +273,56 @@ class Window(QtWidgets.QMainWindow):
         self.theme = 0
         self.cutchecking = False
         self.indexlist = []
-        # self.treeview.setFocus()
+
+        self.select = True
+
         self.getRowCount()
 
-    def openDialog(self):
-        #       pass
-        dialog = ClssDialog(self)
-        dialog.exec_()
+    def openDialog(self, d):
+        self.dialog.show()
+
+    def handlePathEntered(self, path):
+        self.select = False
+        self.path_for_backButton.append(
+            "" if self.pathbar.text() == "Drives" else self.pathbar.text()
+        )
+
+        if path in [
+            "C:",
+            "D:",
+            "E:",
+            "A:",
+            "B:",
+            "H:",
+            "F:",
+            "J:",
+            "Q:",
+            "Z:",
+            "X:",
+            "C:",
+            "I:",
+            "K:",
+            "O:",
+            "Y:"
+        ]:
+            path += "/"
+
+        if not os.path.isdir(path):
+            os.startfile(str(path))
+            path = os.path.dirname(path) if len(path) > 3 else ""
+            self.listview.setRootIndex(self.fileModel.setRootPath(path))
+            self.listview.setCurrentIndex(self.fileModel.index(path))
+            self.treeview.setCurrentIndex(self.dirModel.index(path[:3]))
+
+        else:
+            self.treeview.setCurrentIndex(
+                self.dirModel.index(os.path.abspath(path)[:3])
+            )
+            self.listview.setRootIndex(
+                self.fileModel.setRootPath(os.path.abspath(path))
+            )
+
+        self.pathbar_dest(os.path.abspath(path))
 
     def contextMenuEvent(self, event):
         if self.listview.hasFocus():
@@ -305,10 +355,6 @@ class Window(QtWidgets.QMainWindow):
             self.menu.popup(QCursor.pos())
 
     def _createContextMenu(self):
-        # Setting contextMenuPolicy
-        # self.listview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        # self.treeview.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        # Populating the widget with actions
         self.listview.addAction(self.RenameAction)
         self.listview.addAction(self.NewFolderAction)
         self.listview.addAction(self.delAction)
@@ -321,9 +367,9 @@ class Window(QtWidgets.QMainWindow):
         self.treeview.addAction(self.NewFolderAction)
         self.treeview.addAction(self.cutAction)
         self.treeview.addAction(self.pasteActionTree)
+        self.centralwidget.addAction(self.findAction)
 
     def _createActions(self):
-        # File actions
         self.RenameAction = QtWidgets.QAction("Rename", triggered=self.renameLIST)
         self.RenameAction.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
         self.RenameAction.setShortcutVisibleInContextMenu(True)
@@ -344,10 +390,8 @@ class Window(QtWidgets.QMainWindow):
 
         self.cutAction = QtWidgets.QAction("Cut file", triggered=self.cutfile)
 
-    def openDialog(self):
-        #       pass
-        dialog = ClssDialog(self)
-        dialog.exec_()
+        self.findAction = QtWidgets.QAction("Find", triggered=self.openDialog)
+        self.findAction.setShortcut(QtGui.QKeySequence("Ctrl+f"))
 
     def hiddenitems(self):
         if self.hiddenEnabled == False:
@@ -532,8 +576,6 @@ class Window(QtWidgets.QMainWindow):
             if not os.path.exists(dest):
                 os.mkdir(dest)
             ix = self.dirModel.index(dest)
-            # QtCore.QTimer.singleShot(
-            #     0, lambda ix=ix: self.treeview.setCurrentIndex(ix))
             QtCore.QTimer.singleShot(0, lambda ix=ix: self.treeview.edit(ix))
             ix = self.dirModel.index(os.path.abspath(self.pathbar.text()))
             self.treeview.setCurrentIndex(ix)
@@ -584,8 +626,6 @@ class Window(QtWidgets.QMainWindow):
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.Yes,
             )
-            # self.copyPath = self.fileModel.fileInfo(
-            #     index).absoluteFilePath()
             if msg == QMessageBox.Yes:
                 for delFile in self.listview.selectionModel().selectedIndexes():
                     self.fileModel.remove(delFile)
@@ -600,7 +640,6 @@ class Window(QtWidgets.QMainWindow):
             os.path.dirname(self.pathbar.text()) if len(self.pathbar.text()) > 3 else ""
         )
 
-        # self.treeview.setCurrentIndex(self.dirModel.setRootPath(path))
         self.listview.setRootIndex(self.fileModel.setRootPath(newpath))
 
         self.path_for_backButton.append(
@@ -610,6 +649,8 @@ class Window(QtWidgets.QMainWindow):
 
     def back_click(self):
         self.list_clear()
+        print(self.path_for_backButton)
+
         try:
             backup = self.path_for_backButton.pop()
             self.listview.setRootIndex(self.fileModel.index(backup))
@@ -621,7 +662,8 @@ class Window(QtWidgets.QMainWindow):
         self.listview.clearSelection()
 
     def pathbar_dest(self, path):
-        self.pathbar.setText(path if path != "" else "Drives")
+        self.pathbar.setText(os.path.abspath(path) if path != "" else "Drives")
+        self.dialog.pathbar.setText(os.path.abspath(path) if path != "" else "Drives")
 
     def getRowCount(self):
         index = self.listview.selectionModel().currentIndex()
@@ -674,9 +716,15 @@ class Window(QtWidgets.QMainWindow):
         if not self.dirModel.fileInfo(index).isDir():
             pass
         self.listview.clearFocus()
-        self.path_for_backButton.append(
-            "" if self.pathbar.text() == "Drives" else self.pathbar.text()
-        )
+
+        if self.select:
+            self.path_for_backButton.append(
+                "" if self.pathbar.text() == "Drives" else self.pathbar.text()
+            )
+
+        else:
+            self.select = True
+
         self.getRowCount_tree()
 
     def tree_doubleClicked(self):
@@ -712,7 +760,7 @@ class Window(QtWidgets.QMainWindow):
 
             except:
                 pass
-        print(self.path_for_backButton)
+        # print(self.path_for_backButton)
 
     def count_path(self, p):
         k = ""
