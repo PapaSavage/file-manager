@@ -124,7 +124,7 @@ class Window(QtWidgets.QMainWindow):
         self.backbutton_left.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap("arrows/left-arrow.svg"),
+            QtGui.QPixmap("src/left-arrow.svg"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
@@ -140,10 +140,11 @@ class Window(QtWidgets.QMainWindow):
         self.upbutton_left.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(
-            QtGui.QPixmap("arrows/up-arrow.svg"),
+            QtGui.QPixmap("src/up-arrow.svg"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
+
         self.upbutton_left.setIcon(icon1)
         self.upbutton_left.setObjectName("upbutton_left")
         self.upbutton_left.clicked.connect(self.goUp_click_left)
@@ -156,9 +157,23 @@ class Window(QtWidgets.QMainWindow):
         self.pathbar_left.setText("Drives")
         self.horizontalLayout_2.addWidget(self.pathbar_left)
 
-        self.toolButton = QtWidgets.QToolButton(self.centralwidget)
-        self.toolButton.setObjectName("toolButton")
-        self.horizontalLayout_2.addWidget(self.toolButton)
+        self.toolButton_left = QtWidgets.QToolButton(self.centralwidget)
+        self.toolButton_left.setObjectName("toolButton_left")
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(
+            QtGui.QPixmap("src/3points.svg"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+
+        self.toolButton_left.setIcon(icon)
+        self.toolButton_left.clicked.connect(self.show_menu_left)
+        self.menu_left = QtWidgets.QMenu(self.toolButton_left)
+        self.actions_left = self.create_ToolBar_actions_left()
+        self.menu_left.addActions(self.actions_left)
+        self.toolButton_left.setMenu(self.menu_left)
+        self.horizontalLayout_2.addWidget(self.toolButton_left)
 
         self.dialog_left = ClssDialog(self)
         self.dialog_left.pathEntered.connect(self.handlePathEntered_left)
@@ -240,9 +255,25 @@ class Window(QtWidgets.QMainWindow):
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
 
-        self.toolButton_2 = QtWidgets.QToolButton(self.centralwidget)
-        self.toolButton_2.setObjectName("toolButton_2")
-        self.horizontalLayout_8.addWidget(self.toolButton_2)
+        self.toolButton_right = QtWidgets.QToolButton(self.centralwidget)
+        self.toolButton_right.setObjectName("toolButton_right")
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(
+            QtGui.QPixmap("src/3points.svg"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+
+        self.toolButton_right.setIcon(icon)
+
+        self.menu_right = QtWidgets.QMenu(self.toolButton_right)
+        self.actions_right = self.create_ToolBar_actions_left()
+        self.menu_right.addActions(self.actions_right)
+        self.toolButton_right.setMenu(self.menu_right)
+        self.toolButton_right.clicked.connect(self.show_menu_right)
+
+        self.horizontalLayout_8.addWidget(self.toolButton_right)
 
         self.pathbar_right = QtWidgets.QLineEdit(self.centralwidget)
         self.pathbar_right.setReadOnly(True)
@@ -262,7 +293,7 @@ class Window(QtWidgets.QMainWindow):
         self.backbutton_right.setObjectName("backbutton_right")
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap("arrows/left-arrow.svg"),
+            QtGui.QPixmap("src/left-arrow.svg"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
@@ -277,7 +308,7 @@ class Window(QtWidgets.QMainWindow):
         self.upbutton_right.setObjectName("upbutton_right")
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap("arrows/up-arrow.svg"),
+            QtGui.QPixmap("src/up-arrow.svg"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
@@ -375,7 +406,7 @@ class Window(QtWidgets.QMainWindow):
         self.hiddenbutton.setObjectName("hiddenbutton")
         icon2 = QtGui.QIcon()
         icon2.addPixmap(
-            QtGui.QPixmap("arrows/hide.svg"),
+            QtGui.QPixmap("src/hide.svg"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
@@ -391,7 +422,7 @@ class Window(QtWidgets.QMainWindow):
         self.themebutton.setText("")
         self.themebutton.setObjectName("themebutton")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("arrows/sun-shape.svg"), QtGui.QIcon.Normal)
+        icon.addPixmap(QtGui.QPixmap("src/sun-shape.svg"), QtGui.QIcon.Normal)
         self.themebutton.setIcon(icon)
         self.themebutton.clicked.connect(self.switchtheme)
         self.horizontalLayout_3.addWidget(self.themebutton)
@@ -414,8 +445,7 @@ class Window(QtWidgets.QMainWindow):
         self.select_left = True
         self.select_right = True
 
-        self.copyList_left = []
-        self.copyList_right = []
+        self.copyList = []
 
         self.cutchecking_left = False
         self.cutchecking_right = False
@@ -438,7 +468,7 @@ class Window(QtWidgets.QMainWindow):
             else:
                 self.menu = QtWidgets.QMenu(self.listview_left)
                 if not self.listview_left.selectionModel().hasSelection():
-                    if len(self.copyList_left) > 0:
+                    if len(self.copyList) > 0:
                         self.menu.addAction(self.pasteAction)
                     self.menu.addAction(self.NewFolderAction)
                     self.menu.addAction(self.hiddenAction)
@@ -446,11 +476,11 @@ class Window(QtWidgets.QMainWindow):
                         self.menu.addSeparator()
                         self.menu.addAction(self.cancelAction)
                 elif self.listview_left.selectionModel().hasSelection():
-                    self.menu.addAction(self.copyAction)
+                    self.menu.addAction(self.copyAction_left)
                     self.menu.addAction(self.delAction)
                     self.menu.addAction(self.cutAction)
                     self.menu.addAction(self.RenameAction)
-                    if len(self.copyList_left) > 0:
+                    if len(self.copyList) > 0:
                         self.menu.addAction(self.pasteAction)
                     self.menu.addSeparator()
                     self.menu.addAction(self.NewFolderAction)
@@ -493,7 +523,7 @@ class Window(QtWidgets.QMainWindow):
                         self.menu.addSeparator()
                         self.menu.addAction(self.cancelAction)
                 else:
-                    self.menu.addAction(self.copyAction)
+                    self.menu.addAction(self.copyAction_left)
                     self.menu.addAction(self.RenameAction)
                     self.menu.addAction(self.cutAction)
                     self.menu.addAction(self.delAction)
@@ -504,12 +534,91 @@ class Window(QtWidgets.QMainWindow):
                         self.menu.addSeparator()
                         self.menu.addAction(self.cancelAction)
             self.menu.popup(QCursor.pos())
+        elif self.listview_right.hasFocus():
+            if self.pathbar_right.text() == "Drives":
+                self.menu = QtWidgets.QMenu(self.listview_right)
+                self.menu.addAction(self.hiddenAction)
+                if self.cutchecking_right:
+                    self.menu.addAction(self.cancel_right)
+                self.menu.popup(QCursor.pos())
+
+            else:
+                self.menu = QtWidgets.QMenu(self.listview_right)
+                if not self.listview_right.selectionModel().hasSelection():
+                    if len(self.copyList) > 0:
+                        self.menu.addAction(self.pasteAction)
+                    self.menu.addAction(self.NewFolderAction)
+                    self.menu.addAction(self.hiddenAction)
+                    if self.cutchecking_right:
+                        self.menu.addSeparator()
+                        self.menu.addAction(self.cancelAction)
+                elif self.listview_right.selectionModel().hasSelection():
+                    self.menu.addAction(self.copyAction_right)
+                    self.menu.addAction(self.delAction)
+                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.RenameAction)
+                    if len(self.copyList) > 0:
+                        self.menu.addAction(self.pasteAction)
+                    self.menu.addSeparator()
+                    self.menu.addAction(self.NewFolderAction)
+                    self.menu.addAction(self.hiddenAction)
+                    if self.cutchecking_right:
+                        self.menu.addSeparator()
+                        self.menu.addAction(self.cancelAction)
+                self.menu.popup(QCursor.pos())
+        ######### treeview_left ############
+        elif self.treeview_right.hasFocus():
+            self.menu = QtWidgets.QMenu(self.treeview_right)
+            if not self.treeview_right.selectionModel().hasSelection():
+                self.menu.addAction(self.hiddenAction)
+                if self.cutchecking_right:
+                    self.menu.addSeparator()
+                    self.menu.addAction(self.cancelAction)
+            elif self.treeview_right.selectionModel().hasSelection():
+                index = self.treeview_right.selectionModel().currentIndex()
+
+                if self.dirModel_right.fileName(index)[-3:-1] in [
+                    "C:",
+                    "D:",
+                    "E:",
+                    "A:",
+                    "B:",
+                    "H:",
+                    "F:",
+                    "J:",
+                    "Q:",
+                    "Z:",
+                    "X:",
+                    "C:",
+                    "I:",
+                    "K:",
+                    "O:",
+                    "Y:",
+                ]:
+                    self.menu.addAction(self.hiddenAction)
+                    if self.cutchecking_right:
+                        self.menu.addSeparator()
+                        self.menu.addAction(self.cancelAction)
+                else:
+                    self.menu.addAction(self.copyAction_right)
+                    self.menu.addAction(self.RenameAction)
+                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.delAction)
+                    self.menu.addSeparator()
+                    self.menu.addAction(self.NewFolderAction)
+                    self.menu.addAction(self.pasteAction)
+                    if self.cutchecking_right:
+                        self.menu.addSeparator()
+                        self.menu.addAction(self.cancelAction)
+            self.menu.popup(QCursor.pos())
 
     def _createContextMenu(self):
+        ######### LEFT ############
+
         self.listview_left.addAction(self.RenameAction)
         self.listview_left.addAction(self.NewFolderAction)
         self.listview_left.addAction(self.delAction)
-        self.listview_left.addAction(self.copyAction)
+        self.listview_left.addAction(self.copyAction_left)
         self.listview_left.addAction(self.pasteAction)
         self.listview_left.addAction(self.cutAction)
         self.listview_left.addAction(self.cancelAction)
@@ -526,6 +635,28 @@ class Window(QtWidgets.QMainWindow):
         self.treeview_left.addAction(self.pasteAction)
         self.centralwidget.addAction(self.findAction)
 
+        ######### RIGHT ############
+
+        self.listview_right.addAction(self.RenameAction)
+        self.listview_right.addAction(self.NewFolderAction)
+        self.listview_right.addAction(self.delAction)
+        self.listview_right.addAction(self.copyAction_right)
+        self.listview_right.addAction(self.pasteAction)
+        self.listview_right.addAction(self.cutAction)
+        self.listview_right.addAction(self.cancelAction)
+        self.listview_right.addAction(self.hiddenAction)
+
+        self.listview_right.addAction(self.cancelAction)
+
+        self.treeview_right.addAction(self.cancelAction)
+
+        self.treeview_right.addAction(self.delAction)
+        self.treeview_right.addAction(self.RenameAction)
+        self.treeview_right.addAction(self.NewFolderAction)
+        self.treeview_right.addAction(self.cutAction)
+        self.treeview_right.addAction(self.pasteAction)
+        self.centralwidget.addAction(self.findAction)
+
     def _createActions(self):
         self.RenameAction = QtWidgets.QAction(
             "Rename", triggered=self.renameItemPanelsAction
@@ -538,8 +669,12 @@ class Window(QtWidgets.QMainWindow):
         self.NewFolderAction.setShortcut(QtGui.QKeySequence("Ctrl+n"))
         self.delAction = QtWidgets.QAction("Delete", triggered=self.deleteFile)
         self.delAction.setShortcut(QtGui.QKeySequence("Del"))
-        self.copyAction = QtWidgets.QAction("Copy", triggered=self.copyitems_left)
-        self.copyAction.setShortcut(QtGui.QKeySequence("Ctrl+c"))
+        self.copyAction_left = QtWidgets.QAction("Copy", triggered=self.copyitems_left)
+        self.copyAction_left.setShortcut(QtGui.QKeySequence("Ctrl+c"))
+        self.copyAction_right = QtWidgets.QAction(
+            "Copy", triggered=self.copyitems_right
+        )
+        self.copyAction_right.setShortcut(QtGui.QKeySequence("Ctrl+c"))
         self.pasteAction = QtWidgets.QAction(
             "Paste", triggered=self.pasteItemPanelsAction
         )
@@ -556,6 +691,76 @@ class Window(QtWidgets.QMainWindow):
         self.findAction = QtWidgets.QAction("Find", triggered=self.openDialog_left)
         self.findAction.setShortcut(QtGui.QKeySequence("Ctrl+f"))
 
+    def show_menu_left(self):
+        self.menu_left = QtWidgets.QMenu(self.toolButton_left)
+        self.actions_left = self.create_ToolBar_actions_left()
+        self.menu_left.addActions(self.actions_left)
+        self.toolButton_left.setMenu(self.menu_left)
+
+        self.menu_left.exec_(
+            self.toolButton_left.mapToGlobal(self.toolButton_left.rect().bottomLeft())
+        )
+
+    def show_menu_right(self):
+        self.menu_right = QtWidgets.QMenu(self.toolButton_right)
+        self.actions_right = self.create_ToolBar_actions_right()
+        self.menu_right.addActions(self.actions_right)
+        self.toolButton_right.setMenu(self.menu_right)
+
+        self.menu_right.exec_(
+            self.toolButton_right.mapToGlobal(self.toolButton_right.rect().bottomLeft())
+        )
+
+    def create_ToolBar_actions_left(self):
+        action = QtWidgets.QAction("New Folder", triggered=self.newFolder_tool_left)
+        action1 = QtWidgets.QAction("New File", triggered=self.newFolder_tool_right)
+        if self.pathbar_left.text() == "Drives":
+            action.setDisabled(True)
+            action1.setDisabled(True)
+        else:
+            action.setEnabled(True)
+            action1.setEnabled(True)
+
+        return [action, action1]
+
+    def create_ToolBar_actions_right(self):
+        action = QtWidgets.QAction("New Folder", triggered=self.newFolder_tool_right)
+        action1 = QtWidgets.QAction("New File", triggered=self.newFolder_tool_right)
+        if self.pathbar_left.text() == "Drives":
+            action.setDisabled(True)
+            action1.setDisabled(True)
+        else:
+            action.setEnabled(True)
+            action1.setEnabled(True)
+
+        return [action, action1]
+
+    def newFolder_tool_left(self):
+        self.fileModel_left.setReadOnly(False)
+        dest = os.path.abspath(self.pathbar_left.text() + "/New folder")
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+        ix = self.fileModel_left.index(dest)
+        QtCore.QTimer.singleShot(
+            0, lambda ix=ix: self.listview_left.setCurrentIndex(ix)
+        )
+        QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_left.edit(ix))
+        ix = self.fileModel_left.index(os.path.abspath(self.pathbar_left.text()))
+        self.listview_left.setCurrentIndex(ix)
+
+    def newFolder_tool_right(self):
+        self.fileModel_right.setReadOnly(False)
+        dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+        ix = self.fileModel_right.index(dest)
+        QtCore.QTimer.singleShot(
+            0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
+        )
+        QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
+        ix = self.fileModel_right.index(os.path.abspath(self.pathbar_right.text()))
+        self.listview_right.setCurrentIndex(ix)
+
     def switchtheme(self):
         if self.theme == 0:
             self.setStyleSheet(mystylesheetlight(self))
@@ -563,14 +768,14 @@ class Window(QtWidgets.QMainWindow):
 
             icon = QtGui.QIcon()
             icon.addPixmap(
-                QtGui.QPixmap("arrows/moon.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+                QtGui.QPixmap("src/moon.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
             )
 
         elif self.theme == 1:
             self.setStyleSheet(mystylesheetdark(self))
             icon = QtGui.QIcon()
             icon.addPixmap(
-                QtGui.QPixmap("arrows/sun-shape.svg"),
+                QtGui.QPixmap("src/sun-shape.svg"),
                 QtGui.QIcon.Normal,
                 QtGui.QIcon.Off,
             )
@@ -604,7 +809,7 @@ class Window(QtWidgets.QMainWindow):
 
             icon = QtGui.QIcon()
             icon.addPixmap(
-                QtGui.QPixmap("arrows/show.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+                QtGui.QPixmap("src/show.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
             )
 
         else:
@@ -626,7 +831,7 @@ class Window(QtWidgets.QMainWindow):
             self.hiddenAction.setChecked(False)
             icon = QtGui.QIcon()
             icon.addPixmap(
-                QtGui.QPixmap("arrows/hide.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+                QtGui.QPixmap("src/hide.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off
             )
         self.hiddenbutton.setIcon(icon)
 
@@ -743,7 +948,7 @@ class Window(QtWidgets.QMainWindow):
         self.pathbar_dest_right(os.path.abspath(path))
 
     def copyitems_left(self):
-        self.copyList_left = []
+        self.copyList = []
         self.indexlist_left = []
         print("Копирование")
         if self.listview_left.hasFocus():
@@ -759,7 +964,7 @@ class Window(QtWidgets.QMainWindow):
                     + "/"
                     + self.fileModel_left.data(index, self.fileModel_left.FileNameRole)
                 )
-                self.copyList_left.append(path)
+                self.copyList.append(path)
                 self.indexlist_left.append(index)
 
         elif self.treeview_left.hasFocus():
@@ -771,11 +976,11 @@ class Window(QtWidgets.QMainWindow):
 
             for index in self.selected_left:
                 path = os.path.abspath(self.pathbar_left.text())
-                self.copyList_left.append(path)
+                self.copyList.append(path)
                 self.indexlist_left.append(index)
 
     def copyitems_right(self):
-        self.copyList_right = []
+        self.copyList = []
         self.indexlist_right = []
         print("Копирование")
         if self.listview_right.hasFocus():
@@ -793,7 +998,7 @@ class Window(QtWidgets.QMainWindow):
                         index, self.fileModel_right.FileNameRole
                     )
                 )
-                self.copyList_right.append(path)
+                self.copyList.append(path)
                 self.indexlist_right.append(index)
 
         elif self.treeview_right.hasFocus():
@@ -805,7 +1010,7 @@ class Window(QtWidgets.QMainWindow):
 
             for index in self.selected_right:
                 path = os.path.abspath(self.pathbar_right.text())
-                self.copyList_right.append(path)
+                self.copyList.append(path)
                 self.indexlist_right.append(index)
 
     def pasteItemPanelsAction(self):
@@ -818,7 +1023,7 @@ class Window(QtWidgets.QMainWindow):
                     )
                 )
             )
-            if self.cutchecking_left == True and (chech[0] in self.copyList_left):
+            if self.cutchecking_left == True and (chech[0] in self.copyList):
                 dlg = QMessageBox()
                 dlg.setWindowTitle("Ошибка")
                 dlg.setText("Вырезанный объект нельзя вставить в себя")
@@ -827,7 +1032,7 @@ class Window(QtWidgets.QMainWindow):
 
             text = (
                 "Вы желаете вставить элемент?"
-                if len(self.copyList_left) == 1
+                if len(self.copyList) == 1
                 else "Вы желаете вставить элементы?"
             )
 
@@ -839,7 +1044,7 @@ class Window(QtWidgets.QMainWindow):
                 QMessageBox.Yes,
             )
             if msg == QMessageBox.Yes:
-                for target in self.copyList_left:
+                for target in self.copyList:
                     destination = os.path.abspath(
                         os.path.abspath(
                             self.fileModel_left.filePath(
@@ -859,7 +1064,7 @@ class Window(QtWidgets.QMainWindow):
                 if self.cutchecking_left == True:
                     for index in self.indexlist_left:
                         self.fileModel_left.remove(index)
-                    self.copyList_left = []
+                    self.copyList = []
                     self.cutchecking_left = False
         elif self.treeview_left.hasFocus():
             chech = []
@@ -870,7 +1075,7 @@ class Window(QtWidgets.QMainWindow):
                     )
                 )
             )
-            if self.cutchecking_left == True and (chech[0] in self.copyList_left):
+            if self.cutchecking_left == True and (chech[0] in self.copyList):
                 dlg = QMessageBox()
                 dlg.setWindowTitle("Ошибка")
                 dlg.setText("Вырезанный объект нельзя вставить в себя")
@@ -879,7 +1084,7 @@ class Window(QtWidgets.QMainWindow):
 
             text = (
                 "Вы желаете вставить элемент?"
-                if len(self.copyList_left) == 1
+                if len(self.copyList) == 1
                 else "Вы желаете вставить элементы?"
             )
 
@@ -891,7 +1096,7 @@ class Window(QtWidgets.QMainWindow):
                 QMessageBox.Yes,
             )
             if msg == QMessageBox.Yes:
-                for target in self.copyList_left:
+                for target in self.copyList:
                     destination = os.path.abspath(
                         self.pathbar_left.text()
                         + "/"
@@ -905,7 +1110,7 @@ class Window(QtWidgets.QMainWindow):
                 if self.cutchecking_left:
                     for index in self.indexlist_left:
                         self.fileModel_left.remove(index)
-                    self.copyList_left = []
+                    self.copyList = []
                     self.cutchecking_left = False
         else:
             dlg = QMessageBox()
@@ -995,6 +1200,36 @@ class Window(QtWidgets.QMainWindow):
                     self.treeview_left.setCurrentIndex(ix)
                 except:
                     pass
+            elif self.listview_right.hasFocus():
+                self.fileModel_right.setReadOnly(False)
+                dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
+                if not os.path.exists(dest):
+                    os.mkdir(dest)
+                ix = self.fileModel_right.index(dest)
+                QtCore.QTimer.singleShot(
+                    0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
+                )
+                QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
+                ix = self.fileModel_right.index(
+                    os.path.abspath(self.pathbar_right.text())
+                )
+                self.listview_right.setCurrentIndex(ix)
+            elif self.treeview_right.hasFocus():
+                try:
+                    self.dirModel_right.setReadOnly(False)
+                    dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
+                    if not os.path.exists(dest):
+                        os.mkdir(dest)
+                    ix = self.dirModel_right.index(dest)
+                    QtCore.QTimer.singleShot(
+                        0, lambda ix=ix: self.treeview_right.edit(ix)
+                    )
+                    ix = self.dirModel_right.index(
+                        os.path.abspath(self.pathbar_right.text())
+                    )
+                    self.treeview_right.setCurrentIndex(ix)
+                except:
+                    pass
         except:
             pass
 
@@ -1003,14 +1238,14 @@ class Window(QtWidgets.QMainWindow):
         self.listview_left.setItemDelegate(self.delegate_left)
         self.treeview_left.setItemDelegate(self.delegate_left)
         self.cutchecking_left = False
-        self.copyList_left = []
+        self.copyList = []
 
     def cancel_right(self):
         self.delegate_right = StyledItemDelegate_cancel(indexes=self.selected_right)
         self.listview_right.setItemDelegate(self.delegate_right)
         self.treeview_right.setItemDelegate(self.delegate_right)
         self.cutchecking_right = False
-        self.copyList_right = []
+        self.copyList = []
 
     def cutfile_left(self):
         self.cutchecking_left = True
@@ -1475,6 +1710,11 @@ QTreeView::focus{
     border-width: 1px;
 
     color: black;
+}
+
+QTreeView::focus{
+    border:1px solid black;
+    
 }
 
 QHeaderView::section{
