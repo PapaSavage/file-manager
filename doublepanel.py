@@ -377,7 +377,7 @@ class Window(QtWidgets.QMainWindow):
         self.listview_right.setExpandsOnDoubleClick(True)
 
         self.listview_right.doubleClicked.connect(self.list_doubleClicked_right)
-        self.treeview_right.doubleClicked.connect(self.tree_doubleClicked_left)
+        self.treeview_right.doubleClicked.connect(self.tree_doubleClicked_right)
         self.treeview_right.selectionModel().selectionChanged.connect(
             self.on_selectionChanged_right
         )
@@ -474,11 +474,11 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_left:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_left)
                 elif self.listview_left.selectionModel().hasSelection():
                     self.menu.addAction(self.copyAction_left)
                     self.menu.addAction(self.delAction)
-                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.cutAction_left)
                     self.menu.addAction(self.RenameAction)
                     if len(self.copyList) > 0:
                         self.menu.addAction(self.pasteAction)
@@ -487,7 +487,7 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_left:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_left)
                 self.menu.popup(QCursor.pos())
         ######### treeview_left ############
         elif self.treeview_left.hasFocus():
@@ -496,7 +496,7 @@ class Window(QtWidgets.QMainWindow):
                 self.menu.addAction(self.hiddenAction)
                 if self.cutchecking_left:
                     self.menu.addSeparator()
-                    self.menu.addAction(self.cancelAction)
+                    self.menu.addAction(self.cancelAction_left)
             elif self.treeview_left.selectionModel().hasSelection():
                 index = self.treeview_left.selectionModel().currentIndex()
 
@@ -521,18 +521,18 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_left:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_left)
                 else:
                     self.menu.addAction(self.copyAction_left)
                     self.menu.addAction(self.RenameAction)
-                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.cutAction_left)
                     self.menu.addAction(self.delAction)
                     self.menu.addSeparator()
                     self.menu.addAction(self.NewFolderAction)
                     self.menu.addAction(self.pasteAction)
                     if self.cutchecking_left:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_left)
             self.menu.popup(QCursor.pos())
         elif self.listview_right.hasFocus():
             if self.pathbar_right.text() == "Drives":
@@ -551,11 +551,11 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_right:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_right)
                 elif self.listview_right.selectionModel().hasSelection():
                     self.menu.addAction(self.copyAction_right)
                     self.menu.addAction(self.delAction)
-                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.cutAction_right)
                     self.menu.addAction(self.RenameAction)
                     if len(self.copyList) > 0:
                         self.menu.addAction(self.pasteAction)
@@ -564,7 +564,7 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_right:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_right)
                 self.menu.popup(QCursor.pos())
         ######### treeview_left ############
         elif self.treeview_right.hasFocus():
@@ -573,7 +573,7 @@ class Window(QtWidgets.QMainWindow):
                 self.menu.addAction(self.hiddenAction)
                 if self.cutchecking_right:
                     self.menu.addSeparator()
-                    self.menu.addAction(self.cancelAction)
+                    self.menu.addAction(self.cancelAction_right)
             elif self.treeview_right.selectionModel().hasSelection():
                 index = self.treeview_right.selectionModel().currentIndex()
 
@@ -598,18 +598,18 @@ class Window(QtWidgets.QMainWindow):
                     self.menu.addAction(self.hiddenAction)
                     if self.cutchecking_right:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_right)
                 else:
                     self.menu.addAction(self.copyAction_right)
                     self.menu.addAction(self.RenameAction)
-                    self.menu.addAction(self.cutAction)
+                    self.menu.addAction(self.cutAction_right)
                     self.menu.addAction(self.delAction)
                     self.menu.addSeparator()
                     self.menu.addAction(self.NewFolderAction)
                     self.menu.addAction(self.pasteAction)
                     if self.cutchecking_right:
                         self.menu.addSeparator()
-                        self.menu.addAction(self.cancelAction)
+                        self.menu.addAction(self.cancelAction_right)
             self.menu.popup(QCursor.pos())
 
     def _createContextMenu(self):
@@ -620,18 +620,16 @@ class Window(QtWidgets.QMainWindow):
         self.listview_left.addAction(self.delAction)
         self.listview_left.addAction(self.copyAction_left)
         self.listview_left.addAction(self.pasteAction)
-        self.listview_left.addAction(self.cutAction)
-        self.listview_left.addAction(self.cancelAction)
+        self.listview_left.addAction(self.cutAction_left)
+        self.listview_left.addAction(self.cancelAction_left)
         self.listview_left.addAction(self.hiddenAction)
 
-        self.listview_left.addAction(self.cancelAction)
-
-        self.treeview_left.addAction(self.cancelAction)
+        self.treeview_left.addAction(self.cancelAction_left)
 
         self.treeview_left.addAction(self.delAction)
         self.treeview_left.addAction(self.RenameAction)
         self.treeview_left.addAction(self.NewFolderAction)
-        self.treeview_left.addAction(self.cutAction)
+        self.treeview_left.addAction(self.cutAction_left)
         self.treeview_left.addAction(self.pasteAction)
         self.centralwidget.addAction(self.findAction)
 
@@ -642,18 +640,16 @@ class Window(QtWidgets.QMainWindow):
         self.listview_right.addAction(self.delAction)
         self.listview_right.addAction(self.copyAction_right)
         self.listview_right.addAction(self.pasteAction)
-        self.listview_right.addAction(self.cutAction)
-        self.listview_right.addAction(self.cancelAction)
+        self.listview_right.addAction(self.cutAction_right)
+        self.listview_right.addAction(self.cancelAction_left)
         self.listview_right.addAction(self.hiddenAction)
+        self.listview_right.addAction(self.cancelAction_left)
 
-        self.listview_right.addAction(self.cancelAction)
-
-        self.treeview_right.addAction(self.cancelAction)
-
+        self.treeview_right.addAction(self.cancelAction_left)
         self.treeview_right.addAction(self.delAction)
         self.treeview_right.addAction(self.RenameAction)
         self.treeview_right.addAction(self.NewFolderAction)
-        self.treeview_right.addAction(self.cutAction)
+        self.treeview_right.addAction(self.cutAction_right)
         self.treeview_right.addAction(self.pasteAction)
         self.centralwidget.addAction(self.findAction)
 
@@ -683,10 +679,17 @@ class Window(QtWidgets.QMainWindow):
             "show hidden Files", triggered=self.hiddenitems
         )
         self.hiddenAction.setCheckable(True)
-        self.cutAction = QtWidgets.QAction("Cut file", triggered=self.cutfile_left)
-        self.cutAction.setShortcut(QtGui.QKeySequence("Ctrl+x"))
-        self.cancelAction = QtWidgets.QAction(
+        self.cutAction_left = QtWidgets.QAction("Cut file", triggered=self.cutfile_left)
+        self.cutAction_left.setShortcut(QtGui.QKeySequence("Ctrl+x"))
+        self.cutAction_right = QtWidgets.QAction(
+            "Cut file", triggered=self.cutfile_right
+        )
+        self.cutAction_right.setShortcut(QtGui.QKeySequence("Ctrl+x"))
+        self.cancelAction_left = QtWidgets.QAction(
             "Cancel cutting", triggered=self.cancel_left
+        )
+        self.cancelAction_right = QtWidgets.QAction(
+            "Cancel cutting", triggered=self.cancel_right
         )
         self.findAction = QtWidgets.QAction("Find", triggered=self.openDialog_left)
         self.findAction.setShortcut(QtGui.QKeySequence("Ctrl+f"))
@@ -982,11 +985,11 @@ class Window(QtWidgets.QMainWindow):
     def copyitems_right(self):
         self.copyList = []
         self.indexlist_right = []
-        print("Копирование")
+        print("Правое копирование")
         if self.listview_right.hasFocus():
             self.selected_right = self.listview_right.selectionModel().selectedRows()
 
-            if self.cutchecking_left:
+            if self.cutchecking_right:
                 self.delegate_right = StyledItemDelegate(indexes=self.selected_right)
                 self.listview_right.setItemDelegate(self.delegate_right)
 
@@ -1004,7 +1007,7 @@ class Window(QtWidgets.QMainWindow):
         elif self.treeview_right.hasFocus():
             self.selected_right = self.treeview_right.selectionModel().selectedRows()
 
-            if self.cutchecking_left:
+            if self.cutchecking_right:
                 self.delegate_right = StyledItemDelegate(indexes=self.selected_right)
                 self.treeview_right.setItemDelegate(self.delegate_right)
 
@@ -1014,7 +1017,7 @@ class Window(QtWidgets.QMainWindow):
                 self.indexlist_right.append(index)
 
     def pasteItemPanelsAction(self):
-        if self.listview_left.hasFocus:
+        if self.listview_left.hasFocus():
             chech = []
             chech.append(
                 os.path.abspath(
@@ -1112,6 +1115,105 @@ class Window(QtWidgets.QMainWindow):
                         self.fileModel_left.remove(index)
                     self.copyList = []
                     self.cutchecking_left = False
+        elif self.listview_right.hasFocus():
+            chech = []
+            chech.append(
+                os.path.abspath(
+                    self.fileModel_right.filePath(
+                        self.listview_right.selectionModel().currentIndex()
+                    )
+                )
+            )
+            if self.cutchecking_right == True and (chech[0] in self.copyList):
+                dlg = QMessageBox()
+                dlg.setWindowTitle("Ошибка")
+                dlg.setText("Вырезанный объект нельзя вставить в себя")
+                button = dlg.exec()
+                return
+
+            text = (
+                "Вы желаете вставить элемент?"
+                if len(self.copyList) == 1
+                else "Вы желаете вставить элементы?"
+            )
+
+            msg = QMessageBox.question(
+                self,
+                "Pasting file",
+                text,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if msg == QMessageBox.Yes:
+                for target in self.copyList:
+                    destination = os.path.abspath(
+                        os.path.abspath(
+                            self.fileModel_right.filePath(
+                                self.listview_right.selectionModel().currentIndex()
+                            )
+                        )
+                        + "/"
+                        + QtCore.QFileInfo(target).fileName()
+                    )
+
+                    try:
+                        shutil.copytree(target, destination)
+                    except OSError as e:
+                        if e.errno == errno.ENOTDIR:
+                            shutil.copy(target, destination)
+
+                if self.cutchecking_right == True:
+                    for index in self.indexlist_right:
+                        self.fileModel_right.remove(index)
+                    self.copyList = []
+                    self.cutchecking_right = False
+            print("Вставка")
+        elif self.treeview_right.hasFocus():
+            chech = []
+            chech.append(
+                os.path.abspath(
+                    self.dirModel_right.filePath(
+                        self.treeview_right.selectionModel().currentIndex()
+                    )
+                )
+            )
+            if self.cutchecking_right == True and (chech[0] in self.copyList):
+                dlg = QMessageBox()
+                dlg.setWindowTitle("Ошибка")
+                dlg.setText("Вырезанный объект нельзя вставить в себя")
+                button = dlg.exec()
+                return
+
+            text = (
+                "Вы желаете вставить элемент?"
+                if len(self.copyList) == 1
+                else "Вы желаете вставить элементы?"
+            )
+
+            msg = QMessageBox.question(
+                self,
+                "Pasting file",
+                text,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if msg == QMessageBox.Yes:
+                for target in self.copyList:
+                    destination = os.path.abspath(
+                        self.pathbar_right.text()
+                        + "/"
+                        + QtCore.QFileInfo(target).fileName()
+                    )
+                    try:
+                        shutil.copytree(target, destination)
+                    except OSError as e:
+                        if e.errno == errno.ENOTDIR:
+                            shutil.copy(target, destination)
+                if self.cutchecking_right:
+                    for index in self.indexlist_right:
+                        self.fileModel_right.remove(index)
+                    self.copyList = []
+                    self.cutchecking_right = False
         else:
             dlg = QMessageBox()
             dlg.setWindowTitle("Ошибка")
@@ -1163,6 +1265,56 @@ class Window(QtWidgets.QMainWindow):
                             os.path.abspath(self.pathbar_left.text())
                         )
                         self.treeview_left.setCurrentIndex(ix)
+                    except:
+                        pass
+            except:
+                pass
+        elif self.listview_right.hasFocus():
+            self.fileModel_right.setReadOnly(False)
+            d = os.path.abspath(
+                self.fileModel_right.filePath(
+                    self.listview_right.selectionModel().currentIndex()
+                )
+            )
+            ix = self.fileModel_right.index(d)
+            QtCore.QTimer.singleShot(
+                0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
+            )
+            QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
+        elif self.treeview_right.hasFocus():
+            try:
+                if self.listview_right.hasFocus():
+                    self.fileModel_right.setReadOnly(False)
+                    dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
+                    if not os.path.exists(dest):
+                        os.mkdir(dest)
+                    ix = self.fileModel_right.index(dest)
+                    QtCore.QTimer.singleShot(
+                        0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
+                    )
+                    QtCore.QTimer.singleShot(
+                        0, lambda ix=ix: self.listview_right.edit(ix)
+                    )
+                    ix = self.fileModel_right.index(
+                        os.path.abspath(self.pathbar_right.text())
+                    )
+                    self.listview_right.setCurrentIndex(ix)
+                elif self.treeview_right.hasFocus():
+                    try:
+                        self.dirModel_right.setReadOnly(False)
+                        dest = os.path.abspath(
+                            self.pathbar_right.text() + "/New folder"
+                        )
+                        if not os.path.exists(dest):
+                            os.mkdir(dest)
+                        ix = self.dirModel_right.index(dest)
+                        QtCore.QTimer.singleShot(
+                            0, lambda ix=ix: self.treeview_right.edit(ix)
+                        )
+                        ix = self.dirModel_right.index(
+                            os.path.abspath(self.pathbar_right.text())
+                        )
+                        self.treeview_right.setCurrentIndex(ix)
                     except:
                         pass
             except:
@@ -1713,7 +1865,7 @@ QTreeView::focus{
 }
 
 QTreeView::focus{
-    border:1px solid black;
+    border:1px solid black/;
     
 }
 
