@@ -53,12 +53,7 @@ class ClssDialog(QtWidgets.QDialog):
         self.pathbar_left.setMinimumSize(QtCore.QSize(50, 20))
         self.pathbar_left.setObjectName("pathbar_left")
 
-        # self.pathbar_left.setAlignment(QtCore.Qt.AlignCenter)
-
         self.verticalLayout.addWidget(self.pathbar_left)
-
-        # self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        # self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.pathbar_left.returnPressed.connect(self.handleReturnPressed)
 
@@ -729,7 +724,7 @@ class Window(QtWidgets.QMainWindow):
     def create_ToolBar_actions_right(self):
         action = QtWidgets.QAction("New Folder", triggered=self.newFolder_tool_right)
         action1 = QtWidgets.QAction("New File", triggered=self.newFolder_tool_right)
-        if self.pathbar_left.text() == "Drives":
+        if self.pathbar_right.text() == "Drives":
             action.setDisabled(True)
             action1.setDisabled(True)
         else:
