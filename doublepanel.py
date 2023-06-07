@@ -14,6 +14,55 @@ import subprocess
 import shutil
 import errno
 import psutil
+from PyQt5.QtWidgets import QTreeView, QApplication
+from PyQt5.QtCore import Qt, QMimeData, QDir, QFile, QFileInfo
+
+
+class DragDropTreeView(QTreeView):
+    def __init__(self, parent=None):
+        super(DragDropTreeView, self).__init__(parent)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+        self.setDragDropMode(self.InternalMove)
+
+    def startDrag(self, supportedActions):
+        index = self.currentIndex()
+        if not index.isValid():
+            return
+
+        mimedata = self.model().mimeData([index])
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mimedata)
+        drag.exec_(supportedActions)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            urls = [url.toLocalFile() for url in event.mimeData().urls()]
+            destination_index = self.indexAt(event.pos())
+            destination_path = self.model().filePath(destination_index)
+            for url in urls:
+                file_info = QFileInfo(url)
+                if file_info.isFile():
+                    new_file_path = QDir(destination_path).filePath(
+                        file_info.fileName()
+                    )
+                    if QFile.rename(url, new_file_path):
+                        self.model().refresh()  # Refresh the model to update the view
+                elif file_info.isDir():
+                    new_folder_path = QDir(destination_path).filePath(
+                        file_info.fileName()
+                    )
+                    if QDir(url).rename(url, new_folder_path):
+                        self.model().refresh()  # Refresh the model to update the view
 
 
 class StyledItemDelegate(QStyledItemDelegate):
