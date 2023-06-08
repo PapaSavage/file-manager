@@ -22,34 +22,52 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 from PyQt5.QtCore import Qt, QMimeData, QDir, QFile, QFileInfo
+import time
 
 
-class ProgressThread(QThread):
+class DeleteThread(QThread):
     update_progress = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, fileModel, index):
         super().__init__()
+        self.fileModel = fileModel
+        self.index = index
 
     def run(self):
-        for i in range(101):
-            self.update_progress.emit(i)
-            self.msleep(100)
+        total_files = len(self.index)
+        progress_step = 100 / total_files
+        progress = 0
+
+        for delFile in self.index:
+            QtCore.QCoreApplication.processEvents()
+            self.fileModel.remove(delFile)
+
+            progress += progress_step
+            self.update_progress.emit(int(progress))
+
+        self.update_progress.emit(100)
 
 
 class ProgressDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, fileModel, index, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Прогресс")
+        self.setWindowTitle("Process")
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
 
+        self.text = QtWidgets.QLabel()
+        # self.text.setAlignment(che)
+        self.text.setAlignment(Qt.AlignCenter)
+        self.text.setText("Deleting items")
+
         layout = QVBoxLayout()
+        layout.addWidget(self.text)
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
-        self.progress_thread = ProgressThread()
-        self.progress_thread.update_progress.connect(self.update_progress)
+        self.delete_thread = DeleteThread(fileModel, index)
+        self.delete_thread.update_progress.connect(self.update_progress)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
@@ -61,13 +79,86 @@ class ProgressDialog(QDialog):
     def update_ui(self):
         if self.progress_bar.value() == 100:
             self.timer.stop()
+            time.sleep(0.5)
             self.close()
 
-    def start_progress(self):
-        self.progress_thread.start()
+    def start_deletion(self):
+        self.delete_thread.start()
 
     def cancel(self):
-        self.progress_thread.terminate()
+        self.delete_thread.requestInterruption()
+        self.delete_thread.quit()
+        self.delete_thread.wait()
+        self.progress_bar.reset()
+
+
+class PasteThread(QThread):
+    update_progress = pyqtSignal(int)
+
+    def __init__(self, destTarg):
+        super().__init__()
+        self.destTarg = destTarg
+
+    def run(self):
+        total_files = len(self.destTarg) / 2
+        progress_step = 100 / total_files
+        progress = 0
+
+        for i in range(0, len(self.destTarg), 2):
+            self.target = self.destTarg[i]
+            self.destination = self.destTarg[i + 1]
+
+            try:
+                shutil.copytree(self.target, self.destination)
+            except OSError as e:
+                if e.errno == errno.ENOTDIR:
+                    shutil.copy(self.target, self.destination)
+
+            progress += progress_step
+            self.update_progress.emit(int(progress))
+        self.update_progress.emit(100)
+
+
+class ProgressDialog_Paste(QDialog):
+    def __init__(self, destTarg, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Proceess")
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(100)
+
+        self.text = QtWidgets.QLabel()
+        # self.text.setAlignment(che)
+        self.text.setAlignment(Qt.AlignCenter)
+        self.text.setText("Pasting items")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.text)
+        layout.addWidget(self.progress_bar)
+        self.setLayout(layout)
+
+        self.paste_thread = PasteThread(destTarg)
+        self.paste_thread.update_progress.connect(self.update_progress)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_ui)
+        self.timer.start(100)
+
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
+
+    def update_ui(self):
+        if self.progress_bar.value() == 100:
+            self.timer.stop()
+            time.sleep(0.5)
+            self.close()
+
+    def start_pasting(self):
+        self.paste_thread.start()
+
+    def cancel(self):
+        self.paste_thread.terminate()
         self.progress_bar.reset()
 
 
@@ -1070,7 +1161,7 @@ class Window(QtWidgets.QMainWindow):
             if len(self.copylist) == 1
             else "Вы желаете вставить элементы?"
         )
-        print(self.copylist)
+        self.destTarg = []
         if self.listview_left.hasFocus():
             chech.append(
                 os.path.abspath(
@@ -1109,11 +1200,10 @@ class Window(QtWidgets.QMainWindow):
                             destination = self.checkforExist(destination + "_1")
                         else:
                             destination = self.checkforExist_app(destination)
-                    try:
-                        shutil.copytree(target, destination)
-                    except OSError as e:
-                        if e.errno == errno.ENOTDIR:
-                            shutil.copy(target, destination)
+
+                    self.destTarg.append(target)
+                    self.destTarg.append(destination)
+
         elif self.treeview_left.hasFocus():
             chech.append(
                 os.path.abspath(
@@ -1145,11 +1235,8 @@ class Window(QtWidgets.QMainWindow):
                             destination = self.checkforExist(destination + "_1")
                         else:
                             destination = self.checkforExist_app(destination)
-                    try:
-                        shutil.copytree(target, destination)
-                    except OSError as e:
-                        if e.errno == errno.ENOTDIR:
-                            shutil.copy(target, destination)
+                    self.destTarg.append(target)
+                    self.destTarg.append(destination)
 
         elif self.listview_right.hasFocus():
             chech.append(
@@ -1188,11 +1275,8 @@ class Window(QtWidgets.QMainWindow):
                             destination = self.checkforExist(destination + "_1")
                         else:
                             destination = self.checkforExist_app(destination)
-                    try:
-                        shutil.copytree(target, destination)
-                    except OSError as e:
-                        if e.errno == errno.ENOTDIR:
-                            shutil.copy(target, destination)
+                    self.destTarg.append(target)
+                    self.destTarg.append(destination)
 
         elif self.treeview_right.hasFocus():
             chech.append(
@@ -1225,18 +1309,21 @@ class Window(QtWidgets.QMainWindow):
                             destination = self.checkforExist(destination + "_1")
                         else:
                             destination = self.checkforExist_app(destination)
-                    try:
-                        shutil.copytree(target, destination)
-                    except OSError as e:
-                        if e.errno == errno.ENOTDIR:
-                            shutil.copy(target, destination)
-        if self.cutchecking:
-            for index in self.indexlist_left:
-                self.fileModel_left.remove(index)
-            for index in self.indexlist_right:
-                self.fileModel_right.remove(index)
-            self.copylist = []
-            self.cutchecking = False
+                    self.destTarg.append(target)
+                    self.destTarg.append(destination)
+
+        if msg == QMessageBox.Yes:
+            progress_dialog = ProgressDialog_Paste(self.destTarg)
+            progress_dialog.start_pasting()
+            progress_dialog.exec_()
+
+            if self.cutchecking:
+                for index in self.indexlist_left:
+                    self.fileModel_left.remove(index)
+                for index in self.indexlist_right:
+                    self.fileModel_right.remove(index)
+                self.copylist = []
+                self.cutchecking = False
 
     def renameItemPanelsAction(self):
         if self.listview_left.hasFocus():
@@ -1443,41 +1530,52 @@ class Window(QtWidgets.QMainWindow):
         if msg == QMessageBox.Yes:
             if self.listview_left.hasFocus():
                 index = self.listview_left.selectionModel().selectedIndexes()
-
                 for delFile in self.listview_left.selectionModel().selectedIndexes():
-                    path = self.fileModel_left.fileInfo(delFile).absoluteFilePath()
-                    path = os.path.abspath(path)
+                    path = os.path.abspath(
+                        self.fileModel_left.fileInfo(delFile).absoluteFilePath()
+                    )
+
                     if path in self.copylist:
                         self.copylist.remove(path)
-                    self.fileModel_left.remove(delFile)
-                progress_dialog = ProgressDialog()
 
-                def show_progress_dialog():
-                    progress_dialog.start_progress()
-                    progress_dialog.exec_()
-
-                show_progress_dialog()
+                progress_dialog = ProgressDialog(self.fileModel_left, index)
+                progress_dialog.start_deletion()
+                progress_dialog.exec_()
 
             elif self.treeview_left.hasFocus():
-                index = self.treeview_left.selectionModel().currentIndex()
-                path = self.dirModel_left.fileInfo(index).absoluteFilePath()
+                index = self.treeview_left.selectionModel().selectedIndexes()
+                path = os.path.abspath(self.pathbar_left.text())
                 if path in self.copylist:
                     self.copylist.remove(path)
-                self.fileModel_left.remove(index)
+
+                progress_dialog = ProgressDialog(self.dirModel_left, index)
+                progress_dialog.start_deletion()
+                progress_dialog.exec_()
 
             elif self.listview_right.hasFocus():
                 index = self.listview_right.selectionModel().selectedIndexes()
                 for delFile in self.listview_right.selectionModel().selectedIndexes():
-                    path = self.fileModel_right.fileInfo(delFile).absoluteFilePath()
+                    path = os.path.abspath(
+                        self.fileModel_right.fileInfo(delFile).absoluteFilePath()
+                    )
+
                     if path in self.copylist:
                         self.copylist.remove(path)
-                    self.fileModel_right.remove(delFile)
+
+                progress_dialog = ProgressDialog(self.fileModel_right, index)
+                progress_dialog.start_deletion()
+                progress_dialog.exec_()
+
             elif self.treeview_right.hasFocus():
-                index = self.treeview_right.selectionModel().currentIndex()
-                path = self.dirModel_right.fileInfo(index).absoluteFilePath()
+                index = self.treeview_right.selectionModel().selectedIndexes()
+                path = os.path.abspath(self.pathbar_right.text())
+
                 if path in self.copylist:
                     self.copylist.remove(path)
-                self.fileModel_right.remove(index)
+
+                progress_dialog = ProgressDialog(self.dirModel_right, index)
+                progress_dialog.start_deletion()
+                progress_dialog.exec_()
 
     def goUp_click_left(self):
         self.listview_left.clearSelection()
