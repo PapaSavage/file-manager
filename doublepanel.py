@@ -1730,7 +1730,7 @@ class Window(QtWidgets.QMainWindow):
         else:
             self.select_right = True
 
-        self.getRowCount_tree_right()
+        self.getRowCount_tree_left()
 
     def list_doubleClicked_left(self):
         self.fileModel_left.setReadOnly(True)
@@ -1767,32 +1767,32 @@ class Window(QtWidgets.QMainWindow):
             self.getRowCount_right()
 
     def getRowCount_tree_left(self):
-        index = self.treeview_left.selectionModel().currentIndex()
-        path1 = QtCore.QDir(self.dirModel_left.fileInfo(index).absoluteFilePath())
-        count = len(path1.entryList(QtCore.QDir.Files))
+        if self.treeview_left.hasFocus():
+            index = self.treeview_left.selectionModel().currentIndex()
+            path = QtCore.QDir(self.dirModel_left.fileInfo(index).absoluteFilePath())
+            count = len(path.entryList(QtCore.QDir.Files))
 
-        index_for_checker = self.treeview_left.selectionModel().currentIndex()
-        check = self.dirModel_left.fileInfo(index_for_checker).absoluteFilePath()
+            index_for_checker = self.treeview_left.selectionModel().currentIndex()
+            check = self.dirModel_left.fileInfo(index_for_checker).absoluteFilePath()
 
-        self.statusbar.showMessage(f"{count} files", 0)
+            self.statusbar.showMessage(f"{count} files", 0)
 
-        self.pathbar_dest_left(check)
+            self.pathbar_dest_left(check)
 
-        return count
+            return count
+        elif self.treeview_right.hasFocus():
+            index = self.treeview_right.selectionModel().currentIndex()
+            path = QtCore.QDir(self.dirModel_right.fileInfo(index).absoluteFilePath())
+            count = len(path.entryList(QtCore.QDir.Files))
 
-    def getRowCount_tree_right(self):
-        index = self.treeview_right.selectionModel().currentIndex()
-        path1 = QtCore.QDir(self.dirModel_right.fileInfo(index).absoluteFilePath())
-        count = len(path1.entryList(QtCore.QDir.Files))
+            index_for_checker = self.treeview_right.selectionModel().currentIndex()
+            check = self.dirModel_left.fileInfo(index_for_checker).absoluteFilePath()
 
-        index_for_checker = self.treeview_right.selectionModel().currentIndex()
-        check = self.dirModel_left.fileInfo(index_for_checker).absoluteFilePath()
+            self.statusbar.showMessage(f"{count} files", 0)
 
-        self.statusbar.showMessage(f"{count} files", 0)
+            self.pathbar_dest_right(check)
 
-        self.pathbar_dest_right(check)
-
-        return count
+            return count
 
     def getRowCount_left(self):
         index = self.listview_left.selectionModel().currentIndex()
