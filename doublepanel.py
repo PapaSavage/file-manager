@@ -1,7 +1,7 @@
 import typing
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QWidget
-from PyQt5.QtGui import QCursor, QPixmap
+from PyQt5.QtGui import QCursor, QPixmap, QFont
 from PyQt5.QtCore import QThread, pyqtSignal, QItemSelectionModel, QTimer
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QTreeView, QStyledItemDelegate
@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QMimeData, QDir, QFile, QFileInfo
 import time
+from zipfile import ZipFile
 
 
 class DeleteThread(QThread):
@@ -772,8 +773,6 @@ class Window(QtWidgets.QMainWindow):
             "O:",
             "Y:",
         ]
-        font = QtGui.QFont("Arial")
-        self.setFont(font)
 
     def contextMenuEvent(self, event):
         if self.listview_left.hasFocus():
@@ -794,7 +793,10 @@ class Window(QtWidgets.QMainWindow):
                     if (self.cutchecking) and (len(self.copylist) > 0):
                         self.menu.addSeparator()
                         self.menu.addAction(self.cancelAction)
+
                 elif self.listview_left.selectionModel().hasSelection():
+                    index = self.listview_left.selectionModel().currentIndex()
+
                     self.menu.addAction(self.copyAction)
                     self.menu.addAction(self.delAction)
                     self.menu.addAction(self.cutAction)
@@ -802,6 +804,11 @@ class Window(QtWidgets.QMainWindow):
                     if len(self.copylist) > 0:
                         self.menu.addAction(self.pasteAction)
                     self.menu.addSeparator()
+                    self.menu.addAction(self.zipAction)
+                    self.menu.addSeparator()
+                    if self.fileModel_left.fileName(index)[-3:] == "zip":
+                        self.menu.addSeparator()
+                        self.menu.addAction(self.unzipAction)
                     self.menu.addAction(self.NewFolderAction)
                     self.menu.addAction(self.hiddenAction)
                     if (self.cutchecking) and (len(self.copylist) > 0):
@@ -864,6 +871,8 @@ class Window(QtWidgets.QMainWindow):
                     if len(self.copylist) > 0:
                         self.menu.addAction(self.pasteAction)
                     self.menu.addSeparator()
+                    self.menu.addAction(self.zipAction)
+                    self.menu.addSeparator()
                     self.menu.addAction(self.NewFolderAction)
                     self.menu.addAction(self.hiddenAction)
                     if (self.cutchecking) and (len(self.copylist) > 0):
@@ -912,7 +921,8 @@ class Window(QtWidgets.QMainWindow):
         self.listview_left.addAction(self.cutAction)
         self.listview_left.addAction(self.cancelAction)
         self.listview_left.addAction(self.hiddenAction)
-
+        self.listview_left.addAction(self.zipAction)
+        self.listview_left.addAction(self.unzipAction)
         self.treeview_left.addAction(self.cancelAction)
 
         self.treeview_left.addAction(self.delAction)
@@ -933,6 +943,8 @@ class Window(QtWidgets.QMainWindow):
         self.listview_right.addAction(self.cancelAction)
         self.listview_right.addAction(self.hiddenAction)
         self.listview_right.addAction(self.cancelAction)
+        self.listview_right.addAction(self.zipAction)
+        self.listview_right.addAction(self.unzipAction)
 
         self.treeview_right.addAction(self.cancelAction)
         self.treeview_right.addAction(self.delAction)
@@ -961,8 +973,12 @@ class Window(QtWidgets.QMainWindow):
         )
         self.pasteAction.setShortcut(QtGui.QKeySequence("Ctrl+v"))
         self.hiddenAction = QtWidgets.QAction(
-            "show hidden Files", triggered=self.hiddenitems
+            "Show hidden Files", triggered=self.hiddenitems
         )
+        self.zipAction = QtWidgets.QAction(
+            "Create zip from selection Items", triggered=self.createZipFromItem
+        )
+        self.unzipAction = QtWidgets.QAction("Unzip here", triggered=self.unzipHere)
         self.hiddenAction.setCheckable(True)
         self.cutAction = QtWidgets.QAction("Cut file", triggered=self.cutfile)
         self.cutAction.setShortcut(QtGui.QKeySequence("Ctrl+x"))
@@ -1699,6 +1715,86 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
+    def createZipFromItem(self):
+        if self.listview_left.hasFocus():
+            if self.listview_left.selectionModel().hasSelection():
+                index = self.listview_left.selectionModel().currentIndex()
+                path = self.fileModel_left.fileInfo(index).path()
+                fname = self.fileModel_left.fileInfo(index).fileName()
+                self.copyitems()
+                if self.fileModel_left.fileInfo(index).isDir():
+                    pass
+                else:
+                    h = ""
+                    for i in range(len(fname)):
+                        if fname[i] != ".":
+                            h += fname[i]
+                        else:
+                            break
+                    fname = h
+                target, _ = QtWidgets.QFileDialog.getSaveFileName(
+                    self, "Save as...", path + "/" + fname + ".zip", "zip files (*.zip)"
+                )
+                i
+                if target != "":
+                    zipText = ""
+                    with ZipFile(target, "w") as myzip:
+                        for file in self.copylist:
+                            fname = os.path.basename(file)
+                            myzip.write(file, fname)
+        elif self.listview_right.hasFocus():
+            if self.listview_right.selectionModel().hasSelection():
+                index = self.listview_right.selectionModel().currentIndex()
+                path = self.fileModel_right.fileInfo(index).path()
+                fname = self.fileModel_right.fileInfo(index).fileName()
+                self.copyitems()
+                if self.fileModel_left.fileInfo(index).isDir():
+                    pass
+                else:
+                    h = ""
+                    for i in range(len(fname)):
+                        if fname[i] != ".":
+                            h += fname[i]
+                        else:
+                            break
+                    fname = h
+                target, _ = QtWidgets.QFileDialog.getSaveFileName(
+                    self, "Save as...", path + "/" + fname + ".zip", "zip files (*.zip)"
+                )
+                if target != "":
+                    zipText = ""
+                    with ZipFile(target, "w") as myzip:
+                        for file in self.copylist:
+                            fname = os.path.basename(file)
+                            myzip.write(file, fname)
+        self.copylist = []
+
+    def unzipHere(self):
+        if self.listview_left.hasFocus():
+            if self.listview_left.selectionModel().hasSelection():
+                file_index = self.listview_left.selectionModel().currentIndex()
+                file_path = self.fileModel_left.fileInfo(file_index).filePath()
+                ext = os.path.splitext(file_path)
+                folder_path = (
+                    self.pathbar_left.text()
+                    + "/"
+                    + os.path.basename(file_path).replace(ext[1], "")
+                )
+                with ZipFile(file_path, "r") as zipObj:
+                    zipObj.extractall(folder_path)
+        elif self.listview_right.hasFocus():
+            if self.listview_right.selectionModel().hasSelection():
+                file_index = self.listview_right.selectionModel().currentIndex()
+                file_path = self.fileModel_right.fileInfo(file_index).filePath()
+                ext = os.path.splitext(file_path)
+                folder_path = (
+                    self.pathbar_right.text()
+                    + "/"
+                    + os.path.basename(file_path).replace(ext[1], "")
+                )
+                with ZipFile(file_path, "r") as zipObj:
+                    zipObj.extractall(folder_path)
+
     def cancel(self):
         self.delegate_left = StyledItemDelegate_cancel(indexes=self.selected_left)
         self.listview_left.setItemDelegate(self.delegate_left)
@@ -2337,9 +2433,6 @@ QProgressBar {
     color: black;
     selection-background-color: darkgrey
 }
-
-
-
     """
 
 
