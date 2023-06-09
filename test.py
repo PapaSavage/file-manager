@@ -1,15 +1,7 @@
-# import psutil
+h = [1, 4, 5]
+g = [124, 524]
 
-# print(psutil.disk_usage("C:/")[3])
-
-import os
-
-# os.remove(os.path.abspath("E:\hsd.pdf"))
-# print(os.listdir("E:"))
-# os.remove("E:\Резюме.pdf")
-
-f = [1, 2, 3, 4]
-
-f.remove(3)
-
-print(f)
+g = list.copy(h)
+g.append(6)
+print(g)
+print(h)

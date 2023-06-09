@@ -40,9 +40,13 @@ class DeleteThread(QThread):
 
         for delFile in self.index:
             QtCore.QCoreApplication.processEvents()
-            self.fileModel.remove(delFile)
-
+            try:
+                self.fileModel.remove(delFile)
+            except:
+                pass
             progress += progress_step
+            if progress == 100:
+                progress = 99
             self.update_progress.emit(int(progress))
 
         self.update_progress.emit(100)
@@ -100,13 +104,22 @@ class PasteThread(QThread):
         self.destTarg = destTarg
 
     def run(self):
-        total_files = len(self.destTarg) / 2
-        progress_step = 100 / total_files
+        try:
+            total_files = len(self.destTarg) / 2
+            progress_step = 100 / total_files
+        except:
+            pass
         progress = 0
 
         for i in range(0, len(self.destTarg), 2):
             self.target = self.destTarg[i]
             self.destination = self.destTarg[i + 1]
+
+            if os.path.exists(self.destination):
+                if os.path.isdir(self.target):
+                    self.destination = checkforExist(self.destination + "_1")
+                else:
+                    self.destination = checkforExist_app(self.destination)
 
             try:
                 shutil.copytree(self.target, self.destination)
@@ -115,6 +128,8 @@ class PasteThread(QThread):
                     shutil.copy(self.target, self.destination)
 
             progress += progress_step
+            if progress == 100:
+                progress = 99
             self.update_progress.emit(int(progress))
         self.update_progress.emit(100)
 
@@ -165,14 +180,14 @@ class ProgressDialog_Paste(QDialog):
 class Errors:
     def itemnotExist(self):
         dlg = QMessageBox()
-        dlg.setWindowTitle("Ошибка")
-        dlg.setText("Файла для копирования не существует")
+        dlg.setWindowTitle("ERROR")
+        dlg.setText("File to copy does not exist")
         button = dlg.exec()
 
     def cutIn(self):
         dlg = QMessageBox()
-        dlg.setWindowTitle("Ошибка")
-        dlg.setText("Вырезанный объект нельзя вставить в себя")
+        dlg.setWindowTitle("ERROR")
+        dlg.setText("A cut object cannot be pasted into itself")
         button = dlg.exec()
 
 
@@ -182,6 +197,11 @@ class DragDropTreeView(QTreeView):
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setDragDropMode(self.InternalMove)
+        self.data = None
+        self.pas = []
+
+    def setData(self, data):
+        self.data = data
 
     def startDrag(self, supportedActions):
         index = self.currentIndex()
@@ -202,21 +222,30 @@ class DragDropTreeView(QTreeView):
             event.acceptProposedAction()
 
     def dropEvent(self, event):
+        self.check = []
+
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
             urls = [url.toLocalFile() for url in event.mimeData().urls()]
             destination_index = self.indexAt(event.pos())
             destination_path = self.model().filePath(destination_index)
+
+            if not len(destination_path):
+                destination_path = self.data
+
             for url in urls:
                 file_info = QFileInfo(url)
-                if file_info.isFile():
-                    new_file_path = QDir(destination_path).filePath(
-                        file_info.fileName()
-                    )
-                elif file_info.isDir():
-                    new_folder_path = QDir(destination_path).filePath(
-                        file_info.fileName()
-                    )
+                new_path = QDir(destination_path).filePath(file_info.fileName())
+                self.check.extend([url, new_path])
+
+            if not len(self.check):
+                pass
+            else:
+                self.pas = list.copy(self.check)
+
+            progress_dialog = ProgressDialog_Paste(self.pas)
+            progress_dialog.start_pasting()
+            progress_dialog.exec_()
 
 
 class StyledItemDelegate(QStyledItemDelegate):
@@ -274,11 +303,6 @@ class ClssDialog(QtWidgets.QDialog):
             dlg.setWindowTitle("Ошибка")
             dlg.setText("Неверный адрес")
             button = dlg.exec()
-
-            if button == QMessageBox.Ok:
-                print("Я понял")
-
-            # print(os.path.exists(self.pathbar_left.text()))
 
     def showEvent(self, event):
         super(ClssDialog, self).showEvent(event)
@@ -393,7 +417,7 @@ class Window(QtWidgets.QMainWindow):
         self.treeview_left.setMaximumSize(QtCore.QSize(250, 16777215))
         self.treeview_left.setObjectName("treeview_left")
 
-        self.listview_left = QtWidgets.QTreeView(self.centralwidget)
+        self.listview_left = DragDropTreeView(self.centralwidget)
         self.listview_left.setObjectName("listview_left")
 
         self.treeview_left.setModel(self.dirModel_left)
@@ -528,7 +552,7 @@ class Window(QtWidgets.QMainWindow):
         self.fileModel_right.setReadOnly(False)
         self.fileModel_right.setRootPath("")
 
-        self.listview_right = QtWidgets.QTreeView(self.centralwidget)
+        self.listview_right = DragDropTreeView(self.centralwidget)
         self.listview_right.setObjectName("listview_right")
         # self.horizontalLayout_7.addWidget(self.listview_right)
 
@@ -893,26 +917,39 @@ class Window(QtWidgets.QMainWindow):
     def create_ToolBar_actions_left(self):
         action = QtWidgets.QAction("New Folder", triggered=self.newFolder_tool_left)
         action1 = QtWidgets.QAction("New File", triggered=self.newFolder_tool_right)
+        action2 = QtWidgets.QAction("Paste", triggered=self.paste_tool_left)
         if self.pathbar_left.text() == "Drives":
             action.setDisabled(True)
             action1.setDisabled(True)
+            action2.setDisabled(True)
         else:
             action.setEnabled(True)
             action1.setEnabled(True)
+            if not len(self.copylist):
+                action2.setDisabled(True)
+            else:
+                action2.setEnabled(True)
 
-        return [action, action1]
+        return [action, action1, action2]
 
     def create_ToolBar_actions_right(self):
         action = QtWidgets.QAction("New Folder", triggered=self.newFolder_tool_right)
         action1 = QtWidgets.QAction("New File", triggered=self.newFolder_tool_right)
+        action2 = QtWidgets.QAction("Paste", triggered=self.paste_tool_right)
+
         if self.pathbar_right.text() == "Drives":
             action.setDisabled(True)
             action1.setDisabled(True)
+            action2.setDisabled(True)
         else:
             action.setEnabled(True)
             action1.setEnabled(True)
+            if not len(self.copylist):
+                action2.setDisabled(True)
+            else:
+                action2.setEnabled(True)
 
-        return [action, action1]
+        return [action, action1, action2]
 
     def newFolder_tool_left(self):
         self.fileModel_left.setReadOnly(False)
@@ -939,6 +976,115 @@ class Window(QtWidgets.QMainWindow):
         QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
         ix = self.fileModel_right.index(os.path.abspath(self.pathbar_right.text()))
         self.listview_right.setCurrentIndex(ix)
+
+    def paste_tool_left(self):
+        chech = []
+        text = (
+            "You want to insert an element?"
+            if len(self.copylist) == 1
+            else "You want to insert an elements?"
+        )
+        self.destTarg = []
+
+        chech.append(
+            os.path.abspath(
+                self.fileModel_left.filePath(
+                    self.listview_left.selectionModel().currentIndex()
+                )
+            )
+        )
+        if self.cutchecking == True and (chech[0] in self.copylist):
+            Errors.cutIn(self)
+            return
+
+        msg = QMessageBox.question(
+            self,
+            "Pasting file",
+            text,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if msg == QMessageBox.Yes:
+            for target in self.copylist:
+                if self.listview_left.selectionModel().hasSelection():
+                    destpath = self.fileModel_left.filePath(
+                        self.listview_left.selectionModel().currentIndex()
+                    )
+                else:
+                    destpath = self.pathbar_left.text()
+
+                destination = os.path.abspath(
+                    os.path.abspath(destpath)
+                    + "/"
+                    + QtCore.QFileInfo(target).fileName()
+                )
+                self.destTarg.extend([target, destination])
+
+            progress_dialog = ProgressDialog_Paste(self.destTarg)
+            progress_dialog.start_pasting()
+            progress_dialog.exec_()
+
+            if self.cutchecking:
+                for index in self.indexlist_left:
+                    self.fileModel_left.remove(index)
+                for index in self.indexlist_right:
+                    self.fileModel_right.remove(index)
+                self.copylist = []
+                self.cutchecking = False
+
+    def paste_tool_right(self):
+        chech = []
+        text = (
+            "You want to insert an element?"
+            if len(self.copylist) == 1
+            else "You want to insert an elements?"
+        )
+        self.destTarg = []
+
+        chech.append(
+            os.path.abspath(
+                self.fileModel_right.filePath(
+                    self.listview_right.selectionModel().currentIndex()
+                )
+            )
+        )
+        if self.cutchecking == True and (chech[0] in self.copylist):
+            Errors.cutIn(self)
+            return
+
+        msg = QMessageBox.question(
+            self,
+            "Pasting file",
+            text,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if msg == QMessageBox.Yes:
+            for target in self.copylist:
+                if self.listview_right.selectionModel().hasSelection():
+                    destpath = self.fileModel_right.filePath(
+                        self.listview_right.selectionModel().currentIndex()
+                    )
+                else:
+                    destpath = self.pathbar_right.text()
+                destination = os.path.abspath(
+                    os.path.abspath(destpath)
+                    + "/"
+                    + QtCore.QFileInfo(target).fileName()
+                )
+                self.destTarg.extend([target, destination])
+
+            progress_dialog = ProgressDialog_Paste(self.destTarg)
+            progress_dialog.start_pasting()
+            progress_dialog.exec_()
+
+            if self.cutchecking:
+                for index in self.indexlist_left:
+                    self.fileModel_left.remove(index)
+                for index in self.indexlist_right:
+                    self.fileModel_right.remove(index)
+                self.copylist = []
+                self.cutchecking = False
 
     def switchtheme(self):
         if self.theme == 0:
@@ -1157,9 +1303,9 @@ class Window(QtWidgets.QMainWindow):
     def pasteItemPanelsAction(self):
         chech = []
         text = (
-            "Вы желаете вставить элемент?"
+            "You want to insert an element?"
             if len(self.copylist) == 1
-            else "Вы желаете вставить элементы?"
+            else "You want to insert an elements?"
         )
         self.destTarg = []
         if self.listview_left.hasFocus():
@@ -1195,14 +1341,7 @@ class Window(QtWidgets.QMainWindow):
                         + "/"
                         + QtCore.QFileInfo(target).fileName()
                     )
-                    if os.path.exists(destination):
-                        if os.path.isdir(target):
-                            destination = self.checkforExist(destination + "_1")
-                        else:
-                            destination = self.checkforExist_app(destination)
-
-                    self.destTarg.append(target)
-                    self.destTarg.append(destination)
+                    self.destTarg.extend([target, destination])
 
         elif self.treeview_left.hasFocus():
             chech.append(
@@ -1230,13 +1369,7 @@ class Window(QtWidgets.QMainWindow):
                         + "/"
                         + QtCore.QFileInfo(target).fileName()
                     )
-                    if os.path.exists(destination):
-                        if os.path.isdir(target):
-                            destination = self.checkforExist(destination + "_1")
-                        else:
-                            destination = self.checkforExist_app(destination)
-                    self.destTarg.append(target)
-                    self.destTarg.append(destination)
+                    self.destTarg.extend([target, destination])
 
         elif self.listview_right.hasFocus():
             chech.append(
@@ -1270,13 +1403,7 @@ class Window(QtWidgets.QMainWindow):
                         + "/"
                         + QtCore.QFileInfo(target).fileName()
                     )
-                    if os.path.exists(destination):
-                        if os.path.isdir(target):
-                            destination = self.checkforExist(destination + "_1")
-                        else:
-                            destination = self.checkforExist_app(destination)
-                    self.destTarg.append(target)
-                    self.destTarg.append(destination)
+                    self.destTarg.extend([target, destination])
 
         elif self.treeview_right.hasFocus():
             chech.append(
@@ -1304,13 +1431,7 @@ class Window(QtWidgets.QMainWindow):
                         + "/"
                         + QtCore.QFileInfo(target).fileName()
                     )
-                    if os.path.exists(destination):
-                        if os.path.isdir(target):
-                            destination = self.checkforExist(destination + "_1")
-                        else:
-                            destination = self.checkforExist_app(destination)
-                    self.destTarg.append(target)
-                    self.destTarg.append(destination)
+                    self.destTarg.extend([target, destination])
 
         if msg == QMessageBox.Yes:
             progress_dialog = ProgressDialog_Paste(self.destTarg)
@@ -1433,7 +1554,7 @@ class Window(QtWidgets.QMainWindow):
                 if not os.path.exists(dest):
                     os.mkdir(dest)
                 else:
-                    dest = self.checkforExist(dest + "_1")
+                    dest = checkforExist(dest + "_1")
                     os.mkdir(dest)
                 ix = self.fileModel_left.index(dest)
                 QtCore.QTimer.singleShot(
@@ -1451,7 +1572,7 @@ class Window(QtWidgets.QMainWindow):
                     if not os.path.exists(dest):
                         os.mkdir(dest)
                     else:
-                        dest = self.checkforExist(dest + "_1")
+                        dest = checkforExist(dest + "_1")
                         os.mkdir(dest)
                     ix = self.dirModel_left.index(dest)
                     QtCore.QTimer.singleShot(
@@ -1469,7 +1590,7 @@ class Window(QtWidgets.QMainWindow):
                 if not os.path.exists(dest):
                     os.mkdir(dest)
                 else:
-                    dest = self.checkforExist(dest + "_1")
+                    dest = checkforExist(dest + "_1")
                     os.mkdir(dest)
                 ix = self.fileModel_right.index(dest)
                 QtCore.QTimer.singleShot(
@@ -1487,7 +1608,7 @@ class Window(QtWidgets.QMainWindow):
                     if not os.path.exists(dest):
                         os.mkdir(dest)
                     else:
-                        dest = self.checkforExist(dest + "_1")
+                        dest = checkforExist(dest + "_1")
                         os.mkdir(dest)
                     ix = self.dirModel_right.index(dest)
                     QtCore.QTimer.singleShot(
@@ -1620,6 +1741,9 @@ class Window(QtWidgets.QMainWindow):
             backup = self.path_for_backButton_left.pop()
             self.listview_left.setRootIndex(self.fileModel_left.index(backup))
             self.row_for_back_left(backup + "/" if len(backup) == 2 else backup)
+            self.ignore_selection_changed_left = True
+            self.treeview_left.setCurrentIndex(self.dirModel_left.index(backup[:3]))
+            self.ignore_selection_changed_left = False
 
         except:
             self.listview_left.setRootIndex(self.fileModel_left.index(""))
@@ -1634,7 +1758,9 @@ class Window(QtWidgets.QMainWindow):
             backup = self.path_for_backButton_right.pop()
             self.listview_right.setRootIndex(self.fileModel_right.index(backup))
             self.row_for_back_right(backup + "/" if len(backup) == 2 else backup)
-
+            self.ignore_selection_changed_right = True
+            self.treeview_right.setCurrentIndex(self.dirModel_right.index(backup[:3]))
+            self.ignore_selection_changed_right = False
         except:
             self.listview_right.setRootIndex(self.fileModel_right.index(""))
             self.row_for_back_right("")
@@ -1859,14 +1985,19 @@ class Window(QtWidgets.QMainWindow):
         self.dialog_left.pathbar_left.setText(
             os.path.abspath(path) if path != "" else "Drives"
         )
+        self.listview_left.setData(self.pathbar_left.text())
+
         if self.pathbar_left.text() == "Drives":
             self.clear_treeview_selection_left()
+            self.clear_treeview_selection_right()
 
     def pathbar_dest_right(self, path):
         self.pathbar_right.setText(os.path.abspath(path) if path != "" else "Drives")
         self.dialog_left.pathbar_left.setText(
             os.path.abspath(path) if path != "" else "Drives"
         )
+        self.listview_right.setData(self.pathbar_right.text())
+
         if self.pathbar_right.text() == "Drives":
             self.clear_treeview_selection_right()
 
@@ -1880,28 +2011,31 @@ class Window(QtWidgets.QMainWindow):
         self.treeview_right.clearSelection()
         self.ignore_selection_changed_right = False
 
-    def checkforExist(self, dest):
-        if os.path.exists(dest):
-            dest = dest[:-1] + f"{int(dest[-1]) + 1}"
-            return self.checkforExist(dest)
-        else:
-            return dest
 
-    def checkforExist_app(self, dest):
-        i = len(dest) - 1
-        while i:
-            if dest[i] == ".":
-                break
-            i -= 1
-        dest = self.checkforExist_appType(dest[:i] + "_1", dest[i:])
+def checkforExist(dest):
+    if os.path.exists(dest):
+        dest = dest[:-1] + f"{int(dest[-1]) + 1}"
+        return checkforExist(dest)
+    else:
         return dest
 
-    def checkforExist_appType(self, dest, type):
-        if os.path.exists(dest + type):
-            dest = dest[:-1] + f"{int(dest[-1]) + 1}"
-            return self.checkforExist_appType(dest, type)
-        else:
-            return dest + type
+
+def checkforExist_app(self, dest):
+    i = len(dest) - 1
+    while i:
+        if dest[i] == ".":
+            break
+        i -= 1
+    dest = checkforExist_appType(dest[:i] + "_1", dest[i:])
+    return dest
+
+
+def checkforExist_appType(dest, type):
+    if os.path.exists(dest + type):
+        dest = dest[:-1] + f"{int(dest[-1]) + 1}"
+        return checkforExist_appType(dest, type)
+    else:
+        return dest + type
 
 
 def mystylesheetdark(self):
