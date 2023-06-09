@@ -60,6 +60,16 @@ class ProgressDialog(QDialog):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
 
+        self.setStyleSheet(
+            """QProgressBar {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    color: black;
+    selection-background-color: darkgrey
+}"""
+        )
+
         self.text = QtWidgets.QLabel()
         # self.text.setAlignment(che)
         self.text.setAlignment(Qt.AlignCenter)
@@ -143,6 +153,16 @@ class ProgressDialog_Paste(QDialog):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
 
+        self.setStyleSheet(
+            """QProgressBar {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    color: black;
+    selection-background-color: darkgrey
+}"""
+        )
+
         self.text = QtWidgets.QLabel()
         # self.text.setAlignment(che)
         self.text.setAlignment(Qt.AlignCenter)
@@ -204,11 +224,17 @@ class DragDropTreeView(QTreeView):
         self.data = data
 
     def startDrag(self, supportedActions):
-        index = self.currentIndex()
-        if not index.isValid():
+        if self.data == None:
+            dlg = QMessageBox()
+            dlg.setWindowTitle("ERROR")
+            dlg.setText("This item cannot be copied.")
+            button = dlg.exec()
+            return
+        indices = self.selectedIndexes()
+        if not indices:
             return
 
-        mimedata = self.model().mimeData([index])
+        mimedata = self.model().mimeData(indices)
         drag = QtGui.QDrag(self)
         drag.setMimeData(mimedata)
         drag.exec_(supportedActions)
@@ -232,6 +258,12 @@ class DragDropTreeView(QTreeView):
 
             if not len(destination_path):
                 destination_path = self.data
+                if destination_path == None:
+                    dlg = QMessageBox()
+                    dlg.setWindowTitle("ERROR")
+                    dlg.setText("Сannot be copied to this area.")
+                    button = dlg.exec()
+                    return
 
             for url in urls:
                 file_info = QFileInfo(url)
@@ -431,9 +463,7 @@ class Window(QtWidgets.QMainWindow):
         self.treeview_left.setIndentation(12)
         self.treeview_left.setTreePosition(0)
         self.treeview_left.setUniformRowHeights(True)
-        self.treeview_left.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
-        self.treeview_left.setDragEnabled(True)
-        self.treeview_left.setAcceptDrops(True)
+
         self.treeview_left.setDropIndicatorShown(True)
         self.treeview_left.setAnimated(True)
         self.treeview_left.setSortingEnabled(True)
@@ -572,9 +602,6 @@ class Window(QtWidgets.QMainWindow):
         self.treeview_right.setIndentation(12)
         self.treeview_right.setTreePosition(0)
         self.treeview_right.setUniformRowHeights(True)
-        self.treeview_right.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
-        self.treeview_right.setDragEnabled(True)
-        self.treeview_right.setAcceptDrops(True)
         self.treeview_right.setDropIndicatorShown(True)
         self.treeview_right.setAnimated(True)
         self.treeview_right.setSortingEnabled(True)
@@ -618,7 +645,54 @@ class Window(QtWidgets.QMainWindow):
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+        spacerItem2 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+
+        # total_mem, used_mem, free_mem = shutil.disk_usage(" ")
+        # print("total_mem")
+
+        total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
+
         self.horizontalLayout_3.addItem(spacerItem)
+        self.label_left = QtWidgets.QLabel(self.centralwidget)
+        self.label_left.setObjectName("label")
+
+        self.progress_bar_left = QProgressBar()
+        self.progress_bar_left.setMinimum(0)
+        self.progress_bar_left.setMaximum(100)
+
+        value = round(used_disk_usage / total_disk_usage * 100)
+
+        self.label_left.setText(
+            f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+        )
+        self.progress_bar_left.setValue(value)
+
+        self.horizontalLayout_3.addWidget(self.label_left)
+        self.horizontalLayout_3.addWidget(self.progress_bar_left)
+
+        self.horizontalLayout_3.addItem(spacerItem1)
+
+        self.label_right = QtWidgets.QLabel(self.centralwidget)
+        self.label_right.setObjectName("label")
+
+        self.progress_bar_right = QProgressBar()
+        self.progress_bar_right.setMinimum(0)
+        self.progress_bar_right.setMaximum(100)
+
+        self.label_right.setText(
+            f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+        )
+        self.progress_bar_right.setValue(value)
+
+        self.horizontalLayout_3.addWidget(self.label_right)
+        self.horizontalLayout_3.addWidget(self.progress_bar_right)
+
+        self.horizontalLayout_3.addItem(spacerItem2)
 
         self.hiddenbutton = QtWidgets.QPushButton(self.centralwidget)
         self.hiddenbutton.setMinimumSize(QtCore.QSize(0, 0))
@@ -698,6 +772,8 @@ class Window(QtWidgets.QMainWindow):
             "O:",
             "Y:",
         ]
+        font = QtGui.QFont("Arial")
+        self.setFont(font)
 
     def contextMenuEvent(self, event):
         if self.listview_left.hasFocus():
@@ -1644,7 +1720,7 @@ class Window(QtWidgets.QMainWindow):
         msg = QMessageBox.question(
             self,
             "Deleting file",
-            f"""Вы желаете удалить элемент?""",
+            f"""Do you want to delete an element?""",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
@@ -1987,16 +2063,75 @@ class Window(QtWidgets.QMainWindow):
         )
         self.listview_left.setData(self.pathbar_left.text())
 
+        if self.pathbar_left.text() != "Drives":
+            using = psutil.disk_usage(os.path.abspath(self.pathbar_left.text()))
+
+            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                using.total,
+                using.free,
+                using.used,
+                using.percent,
+            )
+
+            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+
+            total_disk_usage, free_disk_usage, used_disk_usage = map(
+                lambda x: round(x / (10**9)), usi
+            )
+
+            self.label_left.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_left.setValue(int(percent))
+
+        elif self.pathbar_left.text() == "Drives":
+            total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
+            value = round(used_disk_usage / total_disk_usage * 100)
+
+            self.label_left.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_left.setValue(value)
+        # self.label_left.
+
         if self.pathbar_left.text() == "Drives":
             self.clear_treeview_selection_left()
             self.clear_treeview_selection_right()
 
     def pathbar_dest_right(self, path):
         self.pathbar_right.setText(os.path.abspath(path) if path != "" else "Drives")
-        self.dialog_left.pathbar_left.setText(
+        self.dialog_right.pathbar_left.setText(
             os.path.abspath(path) if path != "" else "Drives"
         )
         self.listview_right.setData(self.pathbar_right.text())
+
+        if self.pathbar_right.text() != "Drives":
+            using = psutil.disk_usage(os.path.abspath(self.pathbar_right.text()))
+
+            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                using.total,
+                using.free,
+                using.used,
+                using.percent,
+            )
+            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+
+            total_disk_usage, free_disk_usage, used_disk_usage = map(
+                lambda x: round(x / (10**9)), usi
+            )
+            self.label_right.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_right.setValue(int(percent))
+
+        elif self.pathbar_right.text() == "Drives":
+            total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
+            value = round(used_disk_usage / total_disk_usage * 100)
+
+            self.label_right.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_right.setValue(value)
 
         if self.pathbar_right.text() == "Drives":
             self.clear_treeview_selection_right()
@@ -2020,7 +2155,7 @@ def checkforExist(dest):
         return dest
 
 
-def checkforExist_app(self, dest):
+def checkforExist_app(dest):
     i = len(dest) - 1
     while i:
         if dest[i] == ".":
@@ -2038,8 +2173,31 @@ def checkforExist_appType(dest, type):
         return dest + type
 
 
+def get_disk_usage():
+    partitions = psutil.disk_partitions()
+    # print(partitions)
+    total_disk_usage = 0
+    used_disk_usage = 0
+    free_disk_usage = 0
+    for partition in partitions:
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            used_disk_usage += usage.used
+            free_disk_usage += usage.free
+            total_disk_usage += usage.total
+        except PermissionError:
+            # Пропускаем разделы, к которым нет доступа
+            continue
+    return (
+        round(total_disk_usage / (10**9), 2),
+        round(free_disk_usage / (10**9), 2),
+        round(used_disk_usage / (10**9), 2),
+    )
+
+
 def mystylesheetdark(self):
     return """
+
 
 QWidget{
     background-color: grey;
@@ -2172,12 +2330,23 @@ QMessageBox QLabel#qt_msgbox_label {
     min-width: 350px;
     min-height: 40px;
 }
+QProgressBar {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    color: black;
+    selection-background-color: darkgrey
+}
+
+
 
     """
 
 
 def mystylesheetlight(self):
     return """
+
+    
 
     QWidget{
         background-color: #dce0dd;
@@ -2286,7 +2455,7 @@ font-weight: 600;
 {
     font-size: 16px;
     text-align: center;
-    color: white;
+    color: black;
 }
 
 QMessageBox QPushButton
@@ -2295,10 +2464,17 @@ QMessageBox QPushButton
     min-height: 25px;
 }
 QMessageBox QLabel#qt_msgbox_label {
-    color: white;
+    color: black;
     background-color: transparent;
     min-width: 350px;
     min-height: 40px;
+}
+QProgressBar {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    color: black;
+    selection-background-color: darkgrey
 }
         """
 
