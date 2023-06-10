@@ -1657,6 +1657,7 @@ class Window(QtWidgets.QMainWindow):
                     os.path.abspath(self.pathbar_left.text())
                 )
                 self.listview_left.setCurrentIndex(ix)
+                self.getRowCount_left()
             elif self.treeview_left.hasFocus():
                 try:
                     self.dirModel_left.setReadOnly(False)
@@ -1674,6 +1675,7 @@ class Window(QtWidgets.QMainWindow):
                         os.path.abspath(self.pathbar_left.text())
                     )
                     self.treeview_left.setCurrentIndex(ix)
+                    self.getRowCount_tree_left()
                 except:
                     pass
             elif self.listview_right.hasFocus():
@@ -1693,6 +1695,7 @@ class Window(QtWidgets.QMainWindow):
                     os.path.abspath(self.pathbar_right.text())
                 )
                 self.listview_right.setCurrentIndex(ix)
+                self.getRowCount_right()
             elif self.treeview_right.hasFocus():
                 try:
                     self.dirModel_right.setReadOnly(False)
@@ -1710,6 +1713,7 @@ class Window(QtWidgets.QMainWindow):
                         os.path.abspath(self.pathbar_right.text())
                     )
                     self.treeview_right.setCurrentIndex(ix)
+                    self.getRowCount_tree_left()
                 except:
                     pass
         except:
@@ -1834,6 +1838,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.fileModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
+                self.getRowCount_left()
 
             elif self.treeview_left.hasFocus():
                 index = self.treeview_left.selectionModel().selectedIndexes()
@@ -1844,6 +1849,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.dirModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
+                self.getRowCount_tree_left()
 
             elif self.listview_right.hasFocus():
                 index = self.listview_right.selectionModel().selectedIndexes()
@@ -1858,6 +1864,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.fileModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
+                self.getRowCount_right()
 
             elif self.treeview_right.hasFocus():
                 index = self.treeview_right.selectionModel().selectedIndexes()
@@ -1869,6 +1876,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.dirModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
+                self.getRowCount_tree_left()
 
     def goUp_click_left(self):
         self.listview_left.clearSelection()
