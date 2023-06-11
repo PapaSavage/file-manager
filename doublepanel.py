@@ -28,6 +28,7 @@ from zipfile import ZipFile
 
 class DeleteThread(QThread):
     update_progress = pyqtSignal(int)
+    cancel_process = pyqtSignal()
 
     def __init__(self, fileModel, index):
         super().__init__()
@@ -41,6 +42,10 @@ class DeleteThread(QThread):
 
         for delFile in self.index:
             QtCore.QCoreApplication.processEvents()
+
+            if self.isInterruptionRequested():
+                break
+
             try:
                 self.fileModel.remove(delFile)
             except:
@@ -83,6 +88,9 @@ class ProgressDialog(QDialog):
 
         self.delete_thread = DeleteThread(fileModel, index)
         self.delete_thread.update_progress.connect(self.update_progress)
+        self.delete_thread.cancel_process.connect(
+            self.cancel
+        )  # Подключаем сигнал к слоту cancel
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
@@ -100,6 +108,11 @@ class ProgressDialog(QDialog):
     def start_deletion(self):
         self.delete_thread.start()
 
+    def closeEvent(self, event):
+        self.cancel()  # Вызываем метод cancel при закрытии окна
+
+        super().closeEvent(event)
+
     def cancel(self):
         self.delete_thread.requestInterruption()
         self.delete_thread.quit()
@@ -109,6 +122,7 @@ class ProgressDialog(QDialog):
 
 class PasteThread(QThread):
     update_progress = pyqtSignal(int)
+    cancel_process = pyqtSignal()
 
     def __init__(self, destTarg):
         super().__init__()
@@ -123,6 +137,8 @@ class PasteThread(QThread):
         progress = 0
 
         for i in range(0, len(self.destTarg), 2):
+            if self.isInterruptionRequested():
+                break
             self.target = self.destTarg[i]
             self.destination = self.destTarg[i + 1]
 
@@ -176,6 +192,7 @@ class ProgressDialog_Paste(QDialog):
 
         self.paste_thread = PasteThread(destTarg)
         self.paste_thread.update_progress.connect(self.update_progress)
+        self.paste_thread.cancel_process.connect(self.cancel)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
@@ -385,7 +402,7 @@ class Window(QtWidgets.QMainWindow):
         )
         self.backbutton_left.setIcon(icon)
         self.backbutton_left.setObjectName("backbutton_left")
-        self.backbutton_left.clicked.connect(self.back_click_left)
+        self.backbutton_left.clicked.connect(self.back_click)
 
         self.horizontalLayout_2.addWidget(self.backbutton_left)
 
@@ -402,7 +419,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.upbutton_left.setIcon(icon1)
         self.upbutton_left.setObjectName("upbutton_left")
-        self.upbutton_left.clicked.connect(self.goUp_click_left)
+        self.upbutton_left.clicked.connect(self.goUp_click)
 
         self.horizontalLayout_2.addWidget(self.upbutton_left)
 
@@ -488,8 +505,8 @@ class Window(QtWidgets.QMainWindow):
         self.listview_left.setIndentation(12)
         self.listview_left.setExpandsOnDoubleClick(True)
 
-        self.listview_left.doubleClicked.connect(self.list_doubleClicked_left)
-        self.treeview_left.doubleClicked.connect(self.tree_doubleClicked_left)
+        self.listview_left.doubleClicked.connect(self.list_doubleClicked)
+        self.treeview_left.doubleClicked.connect(self.tree_doubleClicked)
         self.treeview_left.selectionModel().selectionChanged.connect(
             self.on_selectionChanged_left
         )
@@ -551,7 +568,7 @@ class Window(QtWidgets.QMainWindow):
             QtGui.QIcon.Off,
         )
         self.backbutton_right.setIcon(icon)
-        self.backbutton_right.clicked.connect(self.back_click_right)
+        self.backbutton_right.clicked.connect(self.back_click)
 
         self.horizontalLayout_8.addWidget(self.backbutton_right)
 
@@ -566,7 +583,7 @@ class Window(QtWidgets.QMainWindow):
             QtGui.QIcon.Off,
         )
         self.upbutton_right.setIcon(icon)
-        self.upbutton_right.clicked.connect(self.goUp_click_right)
+        self.upbutton_right.clicked.connect(self.goUp_click)
 
         self.horizontalLayout_8.addWidget(self.upbutton_right)
 
@@ -626,8 +643,8 @@ class Window(QtWidgets.QMainWindow):
         self.listview_right.setIndentation(12)
         self.listview_right.setExpandsOnDoubleClick(True)
 
-        self.listview_right.doubleClicked.connect(self.list_doubleClicked_right)
-        self.treeview_right.doubleClicked.connect(self.tree_doubleClicked_right)
+        self.listview_right.doubleClicked.connect(self.list_doubleClicked)
+        self.treeview_right.doubleClicked.connect(self.tree_doubleClicked)
         self.treeview_right.selectionModel().selectionChanged.connect(
             self.on_selectionChanged_right
         )
@@ -1297,7 +1314,7 @@ class Window(QtWidgets.QMainWindow):
                 self.fileModel_left.setRootPath(os.path.abspath(path))
             )
 
-        self.pathbar_dest_left(os.path.abspath(path))
+        self.pathbar_dest(os.path.abspath(path), "left")
 
     def handlePathEntered_right(self, path):
         self.select_right = False
@@ -1328,7 +1345,7 @@ class Window(QtWidgets.QMainWindow):
                 self.fileModel_right.setRootPath(os.path.abspath(path))
             )
 
-        self.pathbar_dest_right(os.path.abspath(path))
+        self.pathbar_dest(os.path.abspath(path), "right")
 
     def copyitems(self):
         self.copylist = []
@@ -1657,7 +1674,7 @@ class Window(QtWidgets.QMainWindow):
                     os.path.abspath(self.pathbar_left.text())
                 )
                 self.listview_left.setCurrentIndex(ix)
-                self.getRowCount_left()
+                self.getRowCount()
             elif self.treeview_left.hasFocus():
                 try:
                     self.dirModel_left.setReadOnly(False)
@@ -1675,7 +1692,7 @@ class Window(QtWidgets.QMainWindow):
                         os.path.abspath(self.pathbar_left.text())
                     )
                     self.treeview_left.setCurrentIndex(ix)
-                    self.getRowCount_tree_left()
+                    self.getRowCount()
                 except:
                     pass
             elif self.listview_right.hasFocus():
@@ -1695,7 +1712,7 @@ class Window(QtWidgets.QMainWindow):
                     os.path.abspath(self.pathbar_right.text())
                 )
                 self.listview_right.setCurrentIndex(ix)
-                self.getRowCount_right()
+                self.getRowCount()
             elif self.treeview_right.hasFocus():
                 try:
                     self.dirModel_right.setReadOnly(False)
@@ -1713,7 +1730,7 @@ class Window(QtWidgets.QMainWindow):
                         os.path.abspath(self.pathbar_right.text())
                     )
                     self.treeview_right.setCurrentIndex(ix)
-                    self.getRowCount_tree_left()
+                    self.getRowCount()
                 except:
                     pass
         except:
@@ -1838,7 +1855,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.fileModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount_left()
+                self.getRowCount()
 
             elif self.treeview_left.hasFocus():
                 index = self.treeview_left.selectionModel().selectedIndexes()
@@ -1849,7 +1866,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.dirModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount_tree_left()
+                self.getRowCount()
 
             elif self.listview_right.hasFocus():
                 index = self.listview_right.selectionModel().selectedIndexes()
@@ -1864,7 +1881,7 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.fileModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount_right()
+                self.getRowCount()
 
             elif self.treeview_right.hasFocus():
                 index = self.treeview_right.selectionModel().selectedIndexes()
@@ -1876,121 +1893,122 @@ class Window(QtWidgets.QMainWindow):
                 progress_dialog = ProgressDialog(self.dirModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount_tree_left()
+                self.getRowCount()
 
-    def goUp_click_left(self):
-        self.listview_left.clearSelection()
-        self.listview_left.collapseAll()
+    def goUp_click(self):
+        if self.upbutton_left.hasFocus():
+            self.listview_left.clearSelection()
+            self.listview_left.collapseAll()
 
-        newpath = (
-            os.path.dirname(self.pathbar_left.text())
-            if len(self.pathbar_left.text()) > 3
-            else ""
-        )
+            newpath = (
+                os.path.dirname(self.pathbar_left.text())
+                if len(self.pathbar_left.text()) > 3
+                else ""
+            )
 
-        self.listview_left.setRootIndex(self.fileModel_left.setRootPath(newpath))
+            self.listview_left.setRootIndex(self.fileModel_left.setRootPath(newpath))
 
-        self.path_for_backButton_left.append(
-            "" if self.pathbar_left.text() == "Drives" else self.pathbar_left.text()
-        )
-        self.row_for_back_left(newpath)
+            self.path_for_backButton_left.append(
+                "" if self.pathbar_left.text() == "Drives" else self.pathbar_left.text()
+            )
+            self.row_for_back(newpath, "left")
 
-    def goUp_click_right(self):
-        self.listview_right.clearSelection()
-        self.listview_right.collapseAll()
+        elif self.upbutton_right.hasFocus():
+            self.listview_right.clearSelection()
+            self.listview_right.collapseAll()
 
-        newpath = (
-            os.path.dirname(self.pathbar_right.text())
-            if len(self.pathbar_right.text()) > 3
-            else ""
-        )
+            newpath = (
+                os.path.dirname(self.pathbar_right.text())
+                if len(self.pathbar_right.text()) > 3
+                else ""
+            )
 
-        self.listview_right.setRootIndex(self.fileModel_right.setRootPath(newpath))
+            self.listview_right.setRootIndex(self.fileModel_right.setRootPath(newpath))
 
-        self.path_for_backButton_right.append(
-            "" if self.pathbar_right.text() == "Drives" else self.pathbar_right.text()
-        )
-        self.row_for_back_right(newpath)
+            self.path_for_backButton_right.append(
+                ""
+                if self.pathbar_right.text() == "Drives"
+                else self.pathbar_right.text()
+            )
+            self.row_for_back(newpath, "right")
 
-    def back_click_left(self):
-        self.listview_left.collapseAll()
-        self.list_clear_left()
-        print(self.path_for_backButton_left)
-
-        try:
-            backup = self.path_for_backButton_left.pop()
-            self.listview_left.setRootIndex(self.fileModel_left.index(backup))
-            self.row_for_back_left(backup + "/" if len(backup) == 2 else backup)
-            self.ignore_selection_changed_left = True
-            self.treeview_left.setCurrentIndex(self.dirModel_left.index(backup[:3]))
-            self.ignore_selection_changed_left = False
-
-        except:
-            self.listview_left.setRootIndex(self.fileModel_left.index(""))
-            self.row_for_back_left("")
-        self.listview_left.clearSelection()
-
-    def back_click_right(self):
-        self.listview_right.collapseAll()
-        self.list_clear_right()
-
-        try:
-            backup = self.path_for_backButton_right.pop()
-            self.listview_right.setRootIndex(self.fileModel_right.index(backup))
-            self.row_for_back_right(backup + "/" if len(backup) == 2 else backup)
-            self.ignore_selection_changed_right = True
-            self.treeview_right.setCurrentIndex(self.dirModel_right.index(backup[:3]))
-            self.ignore_selection_changed_right = False
-        except:
-            self.listview_right.setRootIndex(self.fileModel_right.index(""))
-            self.row_for_back_right("")
-        self.listview_right.clearSelection()
-
-    def list_clear_left(self):
-        for i in range(len(self.path_for_backButton_left)):
+    def back_click(self):
+        if self.backbutton_left.hasFocus():
+            self.listview_left.collapseAll()
+            self.list_clear("left")
             try:
-                if (
-                    self.path_for_backButton_left[i]
-                    == self.path_for_backButton_left[i + 1]
-                ):
-                    self.path_for_backButton_left.remove(
+                backup = self.path_for_backButton_left.pop()
+                self.listview_left.setRootIndex(self.fileModel_left.index(backup))
+                self.row_for_back(backup + "/" if len(backup) == 2 else backup, "left")
+                self.ignore_selection_changed_left = True
+                self.treeview_left.setCurrentIndex(self.dirModel_left.index(backup[:3]))
+                self.ignore_selection_changed_left = False
+            except:
+                self.listview_left.setRootIndex(self.fileModel_left.index(""))
+                self.row_for_back("", "left")
+            self.listview_left.clearSelection()
+        elif self.backbutton_right.hasFocus():
+            self.listview_right.collapseAll()
+            self.list_clear("right")
+            try:
+                backup = self.path_for_backButton_right.pop()
+                self.listview_right.setRootIndex(self.fileModel_right.index(backup))
+                self.row_for_back(backup + "/" if len(backup) == 2 else backup, "right")
+                self.ignore_selection_changed_right = True
+                self.treeview_right.setCurrentIndex(
+                    self.dirModel_right.index(backup[:3])
+                )
+                self.ignore_selection_changed_right = False
+            except:
+                self.listview_right.setRootIndex(self.fileModel_right.index(""))
+                self.row_for_back("", "right")
+            self.listview_right.clearSelection()
+
+    def list_clear(self, button):
+        if button == "left":
+            for i in range(len(self.path_for_backButton_left)):
+                try:
+                    if (
                         self.path_for_backButton_left[i]
-                    )
+                        == self.path_for_backButton_left[i + 1]
+                    ):
+                        self.path_for_backButton_left.remove(
+                            self.path_for_backButton_left[i]
+                        )
 
-            except:
-                pass
-
-    def list_clear_right(self):
-        for i in range(len(self.path_for_backButton_right)):
-            try:
-                if (
-                    self.path_for_backButton_right[i]
-                    == self.path_for_backButton_right[i + 1]
-                ):
-                    self.path_for_backButton_right.remove(
+                except:
+                    pass
+        elif button == "right":
+            for i in range(len(self.path_for_backButton_right)):
+                try:
+                    if (
                         self.path_for_backButton_right[i]
-                    )
+                        == self.path_for_backButton_right[i + 1]
+                    ):
+                        self.path_for_backButton_right.remove(
+                            self.path_for_backButton_right[i]
+                        )
 
-            except:
-                pass
+                except:
+                    pass
 
-    def tree_doubleClicked_left(self):
-        index = self.treeview_left.selectionModel().currentIndex()
-        path = self.dirModel_left.fileInfo(index).absoluteFilePath()
+    def tree_doubleClicked(self):
+        if self.treeview_left.hasFocus():
+            index = self.treeview_left.selectionModel().currentIndex()
+            path = self.dirModel_left.fileInfo(index).absoluteFilePath()
 
-        if not self.dirModel_left.fileInfo(index).isDir():
-            os.startfile(str(path))
-        else:
-            self.listview_left.setRootIndex(self.fileModel_left.setRootPath(path))
+            if not self.dirModel_left.fileInfo(index).isDir():
+                os.startfile(str(path))
+            else:
+                self.listview_left.setRootIndex(self.fileModel_left.setRootPath(path))
+        elif self.treeview_right.hasFocus():
+            index = self.treeview_right.selectionModel().currentIndex()
+            path = self.dirModel_right.fileInfo(index).absoluteFilePath()
 
-    def tree_doubleClicked_right(self):
-        index = self.treeview_right.selectionModel().currentIndex()
-        path = self.dirModel_right.fileInfo(index).absoluteFilePath()
-
-        if not self.dirModel_right.fileInfo(index).isDir():
-            os.startfile(str(path))
-        else:
-            self.listview_right.setRootIndex(self.fileModel_right.setRootPath(path))
+            if not self.dirModel_right.fileInfo(index).isDir():
+                os.startfile(str(path))
+            else:
+                self.listview_right.setRootIndex(self.fileModel_right.setRootPath(path))
 
     def on_selectionChanged_left(self):
         if self.ignore_selection_changed_left:
@@ -2012,7 +2030,7 @@ class Window(QtWidgets.QMainWindow):
         else:
             self.select_left = True
 
-        self.getRowCount_tree_left()
+        self.getRowCount()
 
     def on_selectionChanged_right(self):
         if self.ignore_selection_changed_right:
@@ -2036,44 +2054,81 @@ class Window(QtWidgets.QMainWindow):
         else:
             self.select_right = True
 
-        self.getRowCount_tree_left()
+        self.getRowCount()
 
-    def list_doubleClicked_left(self):
-        self.fileModel_left.setReadOnly(True)
+    def list_doubleClicked(self):
+        if self.listview_left.hasFocus():
+            self.fileModel_left.setReadOnly(True)
 
-        index = self.listview_left.selectionModel().currentIndex()
-        path = self.fileModel_left.fileInfo(index).absoluteFilePath()
+            index = self.listview_left.selectionModel().currentIndex()
+            path = self.fileModel_left.fileInfo(index).absoluteFilePath()
 
-        if not self.fileModel_left.fileInfo(index).isDir():
-            os.startfile(os.path.abspath(path))
-        else:
-            self.path_for_backButton_left.append(
-                "" if self.pathbar_left.text() == "Drives" else self.pathbar_left.text()
-            )
-            self.treeview_left.setCurrentIndex(self.dirModel_left.index(path[:3]))
-            self.listview_left.setRootIndex(self.fileModel_left.setRootPath(path))
-            self.getRowCount_left()
+            if not self.fileModel_left.fileInfo(index).isDir():
+                os.startfile(os.path.abspath(path))
+            else:
+                self.path_for_backButton_left.append(
+                    ""
+                    if self.pathbar_left.text() == "Drives"
+                    else self.pathbar_left.text()
+                )
+                self.treeview_left.setCurrentIndex(self.dirModel_left.index(path[:3]))
+                self.listview_left.setRootIndex(self.fileModel_left.setRootPath(path))
+                self.listview_left.setFocus()
+                self.getRowCount()
+        elif self.listview_right.hasFocus():
+            self.fileModel_right.setReadOnly(True)
 
-    def list_doubleClicked_right(self):
-        self.fileModel_right.setReadOnly(True)
+            index = self.listview_right.selectionModel().currentIndex()
+            path = self.fileModel_right.fileInfo(index).absoluteFilePath()
 
-        index = self.listview_right.selectionModel().currentIndex()
-        path = self.fileModel_right.fileInfo(index).absoluteFilePath()
+            if not self.fileModel_right.fileInfo(index).isDir():
+                os.startfile(os.path.abspath(path))
+            else:
+                self.path_for_backButton_right.append(
+                    ""
+                    if self.pathbar_right.text() == "Drives"
+                    else self.pathbar_right.text()
+                )
+                self.treeview_right.setCurrentIndex(self.dirModel_right.index(path[:3]))
+                self.listview_right.setRootIndex(self.fileModel_right.setRootPath(path))
+                self.listview_right.setFocus()
 
-        if not self.fileModel_right.fileInfo(index).isDir():
-            os.startfile(os.path.abspath(path))
-        else:
-            self.path_for_backButton_right.append(
-                ""
-                if self.pathbar_right.text() == "Drives"
-                else self.pathbar_right.text()
-            )
-            self.treeview_right.setCurrentIndex(self.dirModel_right.index(path[:3]))
-            self.listview_right.setRootIndex(self.fileModel_right.setRootPath(path))
-            self.getRowCount_right()
+                self.getRowCount()
 
-    def getRowCount_tree_left(self):
-        if self.treeview_left.hasFocus():
+    def getRowCount(self):
+        if self.listview_left.hasFocus():
+            index = self.listview_left.selectionModel().currentIndex()
+            path = QtCore.QDir(self.fileModel_left.fileInfo(index).absoluteFilePath())
+            count = len(path.entryList(QtCore.QDir.Files))
+
+            index_for_checker = self.listview_left.selectionModel().currentIndex()
+            check = self.fileModel_left.fileInfo(index_for_checker).absoluteFilePath()
+
+            if check == "":
+                count = 0
+
+            self.statusbar.showMessage(f"{count} files", 0)
+
+            self.pathbar_dest(check, "left")
+
+            return count
+        elif self.listview_right.hasFocus():
+            index = self.listview_right.selectionModel().currentIndex()
+            path = QtCore.QDir(self.fileModel_right.fileInfo(index).absoluteFilePath())
+            count = len(path.entryList(QtCore.QDir.Files))
+
+            index_for_checker = self.listview_right.selectionModel().currentIndex()
+            check = self.fileModel_right.fileInfo(index_for_checker).absoluteFilePath()
+
+            if check == "":
+                count = 0
+
+            self.statusbar.showMessage(f"{count} files", 0)
+
+            self.pathbar_dest(check, "right")
+
+            return count
+        elif self.treeview_left.hasFocus():
             index = self.treeview_left.selectionModel().currentIndex()
             path = QtCore.QDir(self.dirModel_left.fileInfo(index).absoluteFilePath())
             count = len(path.entryList(QtCore.QDir.Files))
@@ -2083,7 +2138,7 @@ class Window(QtWidgets.QMainWindow):
 
             self.statusbar.showMessage(f"{count} files", 0)
 
-            self.pathbar_dest_left(check)
+            self.pathbar_dest(check, "left")
 
             return count
         elif self.treeview_right.hasFocus():
@@ -2096,159 +2151,121 @@ class Window(QtWidgets.QMainWindow):
 
             self.statusbar.showMessage(f"{count} files", 0)
 
-            self.pathbar_dest_right(check)
+            self.pathbar_dest(check, "right")
 
             return count
 
-    def getRowCount_left(self):
-        index = self.listview_left.selectionModel().currentIndex()
-        path = QtCore.QDir(self.fileModel_left.fileInfo(index).absoluteFilePath())
-        count = len(path.entryList(QtCore.QDir.Files))
+    def row_for_back(self, path, button):
+        if button == "left":
+            path_checker = QtCore.QDir(path)
+            count = len(path_checker.entryList(QtCore.QDir.Files))
 
-        index_for_checker = self.listview_left.selectionModel().currentIndex()
-        check = self.fileModel_left.fileInfo(index_for_checker).absoluteFilePath()
+            if path == "":
+                count = 0
 
-        if check == "":
-            count = 0
+            self.statusbar.showMessage(f"{count} files", 0)
 
-        self.statusbar.showMessage(f"{count} files", 0)
+            self.pathbar_dest(path, "left")
 
-        self.pathbar_dest_left(check)
+            return count
+        elif button == "right":
+            path_checker = QtCore.QDir(path)
+            count = len(path_checker.entryList(QtCore.QDir.Files))
 
-        return count
+            if path == "":
+                count = 0
 
-    def getRowCount_right(self):
-        index = self.listview_right.selectionModel().currentIndex()
-        path = QtCore.QDir(self.fileModel_right.fileInfo(index).absoluteFilePath())
-        count = len(path.entryList(QtCore.QDir.Files))
+            self.statusbar.showMessage(f"{count} files", 0)
 
-        index_for_checker = self.listview_right.selectionModel().currentIndex()
-        check = self.fileModel_right.fileInfo(index_for_checker).absoluteFilePath()
+            self.pathbar_dest(path, "right")
 
-        if check == "":
-            count = 0
+            return count
 
-        self.statusbar.showMessage(f"{count} files", 0)
-
-        self.pathbar_dest_right(check)
-
-        return count
-
-    def row_for_back_left(self, path):
-        path_checker = QtCore.QDir(path)
-        count = len(path_checker.entryList(QtCore.QDir.Files))
-
-        if path == "":
-            count = 0
-
-        self.statusbar.showMessage(f"{count} files", 0)
-
-        self.pathbar_dest_left(path)
-
-        return count
-
-    def row_for_back_right(self, path):
-        path_checker = QtCore.QDir(path)
-        count = len(path_checker.entryList(QtCore.QDir.Files))
-
-        if path == "":
-            count = 0
-
-        self.statusbar.showMessage(f"{count} files", 0)
-
-        self.pathbar_dest_right(path)
-
-        return count
-
-    def pathbar_dest_left(self, path):
-        self.pathbar_left.setText(os.path.abspath(path) if path != "" else "Drives")
-        self.dialog_left.pathbar_left.setText(
-            os.path.abspath(path) if path != "" else "Drives"
-        )
-        self.listview_left.setData(self.pathbar_left.text())
-
-        if self.pathbar_left.text() != "Drives":
-            using = psutil.disk_usage(os.path.abspath(self.pathbar_left.text()))
-
-            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
-                using.total,
-                using.free,
-                using.used,
-                using.percent,
+    def pathbar_dest(self, path, side):
+        if side == "left":
+            self.pathbar_left.setText(os.path.abspath(path) if path != "" else "Drives")
+            self.dialog_left.pathbar_left.setText(
+                os.path.abspath(path) if path != "" else "Drives"
             )
+            self.listview_left.setData(self.pathbar_left.text())
 
-            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+            if self.pathbar_left.text() != "Drives":
+                using = psutil.disk_usage(os.path.abspath(self.pathbar_left.text()))
 
-            total_disk_usage, free_disk_usage, used_disk_usage = map(
-                lambda x: round(x / (10**9)), usi
+                total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                    using.total,
+                    using.free,
+                    using.used,
+                    using.percent,
+                )
+
+                usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+
+                total_disk_usage, free_disk_usage, used_disk_usage = map(
+                    lambda x: round(x / (10**9)), usi
+                )
+
+                self.label_left.setText(
+                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+                )
+                self.progress_bar_left.setValue(int(percent))
+
+            elif self.pathbar_left.text() == "Drives":
+                total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
+                value = round(used_disk_usage / total_disk_usage * 100)
+
+                self.label_left.setText(
+                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+                )
+                self.progress_bar_left.setValue(value)
+                self.clear_treeview_selection("left")
+        elif side == "right":
+            self.pathbar_right.setText(
+                os.path.abspath(path) if path != "" else "Drives"
             )
-
-            self.label_left.setText(
-                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            self.dialog_right.pathbar_left.setText(
+                os.path.abspath(path) if path != "" else "Drives"
             )
-            self.progress_bar_left.setValue(int(percent))
+            self.listview_right.setData(self.pathbar_right.text())
 
-        elif self.pathbar_left.text() == "Drives":
-            total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
-            value = round(used_disk_usage / total_disk_usage * 100)
+            if self.pathbar_right.text() != "Drives":
+                using = psutil.disk_usage(os.path.abspath(self.pathbar_right.text()))
 
-            self.label_left.setText(
-                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
-            )
-            self.progress_bar_left.setValue(value)
-        # self.label_left.
+                total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                    using.total,
+                    using.free,
+                    using.used,
+                    using.percent,
+                )
+                usi = [total_disk_usage, free_disk_usage, used_disk_usage]
 
-        if self.pathbar_left.text() == "Drives":
-            self.clear_treeview_selection_left()
-            self.clear_treeview_selection_right()
+                total_disk_usage, free_disk_usage, used_disk_usage = map(
+                    lambda x: round(x / (10**9)), usi
+                )
+                self.label_right.setText(
+                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+                )
+                self.progress_bar_right.setValue(int(percent))
 
-    def pathbar_dest_right(self, path):
-        self.pathbar_right.setText(os.path.abspath(path) if path != "" else "Drives")
-        self.dialog_right.pathbar_left.setText(
-            os.path.abspath(path) if path != "" else "Drives"
-        )
-        self.listview_right.setData(self.pathbar_right.text())
+            elif self.pathbar_right.text() == "Drives":
+                total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
+                value = round(used_disk_usage / total_disk_usage * 100)
 
-        if self.pathbar_right.text() != "Drives":
-            using = psutil.disk_usage(os.path.abspath(self.pathbar_right.text()))
+                self.label_right.setText(
+                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+                )
+                self.progress_bar_right.setValue(value)
+                self.clear_treeview_selection("right")
 
-            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
-                using.total,
-                using.free,
-                using.used,
-                using.percent,
-            )
-            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
-
-            total_disk_usage, free_disk_usage, used_disk_usage = map(
-                lambda x: round(x / (10**9)), usi
-            )
-            self.label_right.setText(
-                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
-            )
-            self.progress_bar_right.setValue(int(percent))
-
-        elif self.pathbar_right.text() == "Drives":
-            total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
-            value = round(used_disk_usage / total_disk_usage * 100)
-
-            self.label_right.setText(
-                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
-            )
-            self.progress_bar_right.setValue(value)
-
-        if self.pathbar_right.text() == "Drives":
-            self.clear_treeview_selection_right()
-
-    def clear_treeview_selection_left(self):
-        self.ignore_selection_changed_left = True
-        self.treeview_left.clearSelection()
-        self.ignore_selection_changed_left = False
-
-    def clear_treeview_selection_right(self):
-        self.ignore_selection_changed_right = True
-        self.treeview_right.clearSelection()
-        self.ignore_selection_changed_right = False
+    def clear_treeview_selection(self, side):
+        if side == "left":
+            self.ignore_selection_changed_left = True
+            self.treeview_left.clearSelection()
+            self.ignore_selection_changed_left = False
+        elif side == "right":
+            self.ignore_selection_changed_right = True
+            self.treeview_right.clearSelection()
+            self.ignore_selection_changed_right = False
 
 
 def checkforExist(dest):
