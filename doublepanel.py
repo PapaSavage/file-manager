@@ -229,6 +229,24 @@ class Errors:
         dlg.setText("A cut object cannot be pasted into itself")
         button = dlg.exec()
 
+    def pasting(self):
+        dlg = QMessageBox()
+        dlg.setWindowTitle("ERROR")
+        dlg.setText("Сannot be inserted here")
+        button = dlg.exec()
+
+    def paster(self):
+        dlg = QMessageBox()
+        dlg.setWindowTitle("ERROR")
+        dlg.setText("Nothing to copy")
+        button = dlg.exec()
+
+    def copyEr(self):
+        dlg = QMessageBox()
+        dlg.setWindowTitle("ERROR")
+        dlg.setText("You can`t copy this item")
+        button = dlg.exec()
+
 
 class DragDropTreeView(QTreeView):
     def __init__(self, parent=None):
@@ -1357,6 +1375,10 @@ class Window(QtWidgets.QMainWindow):
             self.indexlist_left = []
             self.indexlist_right = []
             if self.listview_right.hasFocus():
+                if self.pathbar_right.text() == "Drives":
+                    Errors.copyEr()
+                    return
+
                 self.selected_right = (
                     self.listview_right.selectionModel().selectedRows()
                 )
@@ -1379,6 +1401,10 @@ class Window(QtWidgets.QMainWindow):
                     self.indexlist_right.append(index)
 
             elif self.treeview_right.hasFocus():
+                if os.path.abspath(self.pathbar_right.text())[:2] in self.rDirs:
+                    Errors.copyEr()
+                    return
+
                 self.selected_right = (
                     self.treeview_right.selectionModel().selectedRows()
                 )
@@ -1395,6 +1421,11 @@ class Window(QtWidgets.QMainWindow):
                     self.indexlist_right.append(index)
 
             elif self.listview_left.hasFocus():
+                
+                if self.pathbar_left.text() == "Drives":
+                    Errors.copyEr()
+                    return
+                
                 self.selected_left = self.listview_left.selectionModel().selectedRows()
 
                 if self.cutchecking:
@@ -1413,6 +1444,11 @@ class Window(QtWidgets.QMainWindow):
                     self.indexlist_left.append(index)
 
             elif self.treeview_left.hasFocus():
+                
+                if os.path.abspath(self.pathbar_left.text())[:2] in self.rDirs:
+                    Errors.copyEr()
+                    return
+                
                 self.selected_left = self.treeview_left.selectionModel().selectedRows()
 
                 if self.cutchecking:
@@ -1427,6 +1463,9 @@ class Window(QtWidgets.QMainWindow):
             pass
 
     def pasteItemPanelsAction(self):
+        if len(self.copylist) == 0:
+            Errors.paster(self)
+            return
         try:
             chech = []
             text = (
@@ -1436,6 +1475,9 @@ class Window(QtWidgets.QMainWindow):
             )
             self.destTarg = []
             if self.listview_left.hasFocus():
+                if self.pathbar_left.text() == "Drives":
+                    Errors.pasting(self)
+                    return
                 chech.append(
                     os.path.abspath(
                         self.fileModel_left.filePath(
@@ -1471,6 +1513,9 @@ class Window(QtWidgets.QMainWindow):
                         self.destTarg.extend([target, destination])
 
             elif self.treeview_left.hasFocus():
+                if self.pathbar_left.text() == "Drives":
+                    Errors.pasting()
+                    return
                 chech.append(
                     os.path.abspath(
                         self.dirModel_left.filePath(
@@ -1499,6 +1544,9 @@ class Window(QtWidgets.QMainWindow):
                         self.destTarg.extend([target, destination])
 
             elif self.listview_right.hasFocus():
+                if self.pathbar_right.text() == "Drives":
+                    Errors.pasting()
+                    return
                 chech.append(
                     os.path.abspath(
                         self.fileModel_right.filePath(
@@ -1533,6 +1581,9 @@ class Window(QtWidgets.QMainWindow):
                         self.destTarg.extend([target, destination])
 
             elif self.treeview_right.hasFocus():
+                if self.pathbar_right.text() == "Drives":
+                    Errors.pasting()
+                    return
                 chech.append(
                     os.path.abspath(
                         self.dirModel_right.filePath(
@@ -2619,7 +2670,9 @@ if __name__ == "__main__":
     app.setStyle("Fusion")
 
     icon = QtGui.QIcon()
-    icon.addPixmap(QtGui.QPixmap("src/setting.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+    icon.addPixmap(
+        QtGui.QPixmap("src/setting.png"), QtGui.QIcon.Selected, QtGui.QIcon.On
+    )
 
     app.setWindowIcon(icon)
 
