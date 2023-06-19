@@ -77,7 +77,6 @@ class ProgressDialog(QDialog):
         )
 
         self.text = QtWidgets.QLabel()
-        # self.text.setAlignment(che)
         self.text.setAlignment(Qt.AlignCenter)
         self.text.setText("Deleting items")
 
@@ -88,9 +87,7 @@ class ProgressDialog(QDialog):
 
         self.delete_thread = DeleteThread(fileModel, index)
         self.delete_thread.update_progress.connect(self.update_progress)
-        self.delete_thread.cancel_process.connect(
-            self.cancel
-        )  # Подключаем сигнал к слоту cancel
+        self.delete_thread.cancel_process.connect(self.cancel)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
@@ -109,7 +106,7 @@ class ProgressDialog(QDialog):
         self.delete_thread.start()
 
     def closeEvent(self, event):
-        self.cancel()  # Вызываем метод cancel при закрытии окна
+        self.cancel()
 
         super().closeEvent(event)
 
@@ -181,7 +178,6 @@ class ProgressDialog_Paste(QDialog):
         )
 
         self.text = QtWidgets.QLabel()
-        # self.text.setAlignment(che)
         self.text.setAlignment(Qt.AlignCenter)
         self.text.setText("Pasting items")
 
@@ -206,6 +202,11 @@ class ProgressDialog_Paste(QDialog):
             self.timer.stop()
             time.sleep(0.5)
             self.close()
+
+    def closeEvent(self, event):
+        self.cancel()
+
+        super().closeEvent(event)
 
     def start_pasting(self):
         self.paste_thread.start()
@@ -305,7 +306,6 @@ class StyledItemDelegate(QStyledItemDelegate):
 
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        # Проверяем условие, когда нужно изменить стиль строки
         if index in self.indexes:
             option.font.setBold(True)
 
@@ -317,7 +317,6 @@ class StyledItemDelegate_cancel(QStyledItemDelegate):
 
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        # Проверяем условие, когда нужно изменить стиль строки
         if index in self.indexes:
             option.font.setBold(False)
 
@@ -589,9 +588,6 @@ class Window(QtWidgets.QMainWindow):
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_8)
 
-        # self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
-        # self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-
         self.dirModel_right = QtWidgets.QFileSystemModel()
         self.dirModel_right.setReadOnly(False)
         self.dirModel_right.setRootPath("")
@@ -602,12 +598,10 @@ class Window(QtWidgets.QMainWindow):
 
         self.listview_right = DragDropTreeView(self.centralwidget)
         self.listview_right.setObjectName("listview_right")
-        # self.horizontalLayout_7.addWidget(self.listview_right)
 
         self.treeview_right = QtWidgets.QTreeView(self.centralwidget)
         self.treeview_right.setMaximumSize(QtCore.QSize(250, 16777215))
         self.treeview_right.setObjectName("treeview_right")
-        # self.horizontalLayout_7.addWidget(self.treeview_right)
 
         self.treeview_right.setModel(self.dirModel_right)
         self.listview_right.setModel(self.fileModel_right)
@@ -669,9 +663,6 @@ class Window(QtWidgets.QMainWindow):
         spacerItem2 = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
-
-        # total_mem, used_mem, free_mem = shutil.disk_usage(" ")
-        # print("total_mem")
 
         total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
 
@@ -1038,7 +1029,7 @@ class Window(QtWidgets.QMainWindow):
                 action2.setDisabled(True)
             else:
                 action2.setEnabled(True)
-
+        action1.setDisabled(True)
         return [action, action1, action2]
 
     def create_ToolBar_actions_right(self):
@@ -1057,6 +1048,7 @@ class Window(QtWidgets.QMainWindow):
                 action2.setDisabled(True)
             else:
                 action2.setEnabled(True)
+        action1.setDisabled(True)
 
         return [action, action1, action2]
 
@@ -1554,6 +1546,7 @@ class Window(QtWidgets.QMainWindow):
                     self.fileModel_right.remove(index)
                 self.copylist = []
                 self.cutchecking = False
+        self.refreshbar()
 
     def renameItemPanelsAction(self):
         if self.listview_left.hasFocus():
@@ -1756,7 +1749,6 @@ class Window(QtWidgets.QMainWindow):
                 target, _ = QtWidgets.QFileDialog.getSaveFileName(
                     self, "Save as...", path + "/" + fname + ".zip", "zip files (*.zip)"
                 )
-                i
                 if target != "":
                     zipText = ""
                     with ZipFile(target, "w") as myzip:
@@ -1851,22 +1843,22 @@ class Window(QtWidgets.QMainWindow):
 
                     if path in self.copylist:
                         self.copylist.remove(path)
+                        self.cancel()
 
                 progress_dialog = ProgressDialog(self.fileModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount()
 
             elif self.treeview_left.hasFocus():
                 index = self.treeview_left.selectionModel().selectedIndexes()
                 path = os.path.abspath(self.pathbar_left.text())
                 if path in self.copylist:
                     self.copylist.remove(path)
+                    self.cancel()
 
                 progress_dialog = ProgressDialog(self.dirModel_left, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount()
 
             elif self.listview_right.hasFocus():
                 index = self.listview_right.selectionModel().selectedIndexes()
@@ -1877,11 +1869,11 @@ class Window(QtWidgets.QMainWindow):
 
                     if path in self.copylist:
                         self.copylist.remove(path)
+                        self.cancel()
 
                 progress_dialog = ProgressDialog(self.fileModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount()
 
             elif self.treeview_right.hasFocus():
                 index = self.treeview_right.selectionModel().selectedIndexes()
@@ -1889,11 +1881,12 @@ class Window(QtWidgets.QMainWindow):
 
                 if path in self.copylist:
                     self.copylist.remove(path)
+                    self.cancel()
 
                 progress_dialog = ProgressDialog(self.dirModel_right, index)
                 progress_dialog.start_deletion()
                 progress_dialog.exec_()
-                self.getRowCount()
+        self.refreshbar()
 
     def goUp_click(self):
         if self.upbutton_left.hasFocus():
@@ -1935,7 +1928,6 @@ class Window(QtWidgets.QMainWindow):
     def back_click(self):
         if self.backbutton_left.hasFocus():
             self.listview_left.collapseAll()
-            self.list_clear("left")
             try:
                 backup = self.path_for_backButton_left.pop()
                 self.listview_left.setRootIndex(self.fileModel_left.index(backup))
@@ -1949,7 +1941,6 @@ class Window(QtWidgets.QMainWindow):
             self.listview_left.clearSelection()
         elif self.backbutton_right.hasFocus():
             self.listview_right.collapseAll()
-            self.list_clear("right")
             try:
                 backup = self.path_for_backButton_right.pop()
                 self.listview_right.setRootIndex(self.fileModel_right.index(backup))
@@ -1963,34 +1954,6 @@ class Window(QtWidgets.QMainWindow):
                 self.listview_right.setRootIndex(self.fileModel_right.index(""))
                 self.row_for_back("", "right")
             self.listview_right.clearSelection()
-
-    def list_clear(self, button):
-        if button == "left":
-            for i in range(len(self.path_for_backButton_left)):
-                try:
-                    if (
-                        self.path_for_backButton_left[i]
-                        == self.path_for_backButton_left[i + 1]
-                    ):
-                        self.path_for_backButton_left.remove(
-                            self.path_for_backButton_left[i]
-                        )
-
-                except:
-                    pass
-        elif button == "right":
-            for i in range(len(self.path_for_backButton_right)):
-                try:
-                    if (
-                        self.path_for_backButton_right[i]
-                        == self.path_for_backButton_right[i + 1]
-                    ):
-                        self.path_for_backButton_right.remove(
-                            self.path_for_backButton_right[i]
-                        )
-
-                except:
-                    pass
 
     def tree_doubleClicked(self):
         if self.treeview_left.hasFocus():
@@ -2190,25 +2153,7 @@ class Window(QtWidgets.QMainWindow):
             self.listview_left.setData(self.pathbar_left.text())
 
             if self.pathbar_left.text() != "Drives":
-                using = psutil.disk_usage(os.path.abspath(self.pathbar_left.text()))
-
-                total_disk_usage, free_disk_usage, used_disk_usage, percent = (
-                    using.total,
-                    using.free,
-                    using.used,
-                    using.percent,
-                )
-
-                usi = [total_disk_usage, free_disk_usage, used_disk_usage]
-
-                total_disk_usage, free_disk_usage, used_disk_usage = map(
-                    lambda x: round(x / (10**9)), usi
-                )
-
-                self.label_left.setText(
-                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
-                )
-                self.progress_bar_left.setValue(int(percent))
+                self.refreshbar()
 
             elif self.pathbar_left.text() == "Drives":
                 total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
@@ -2229,23 +2174,7 @@ class Window(QtWidgets.QMainWindow):
             self.listview_right.setData(self.pathbar_right.text())
 
             if self.pathbar_right.text() != "Drives":
-                using = psutil.disk_usage(os.path.abspath(self.pathbar_right.text()))
-
-                total_disk_usage, free_disk_usage, used_disk_usage, percent = (
-                    using.total,
-                    using.free,
-                    using.used,
-                    using.percent,
-                )
-                usi = [total_disk_usage, free_disk_usage, used_disk_usage]
-
-                total_disk_usage, free_disk_usage, used_disk_usage = map(
-                    lambda x: round(x / (10**9)), usi
-                )
-                self.label_right.setText(
-                    f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
-                )
-                self.progress_bar_right.setValue(int(percent))
+                self.refreshbar()
 
             elif self.pathbar_right.text() == "Drives":
                 total_disk_usage, free_disk_usage, used_disk_usage = get_disk_usage()
@@ -2266,6 +2195,47 @@ class Window(QtWidgets.QMainWindow):
             self.ignore_selection_changed_right = True
             self.treeview_right.clearSelection()
             self.ignore_selection_changed_right = False
+
+    def refreshbar(self):
+        if self.pathbar_right.text() != "Drives":
+            using = psutil.disk_usage(os.path.abspath(self.pathbar_right.text()))
+
+            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                using.total,
+                using.free,
+                using.used,
+                using.percent,
+            )
+            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+
+            total_disk_usage, free_disk_usage, used_disk_usage = map(
+                lambda x: round(x / (10**9)), usi
+            )
+            self.label_right.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_right.setValue(int(percent))
+
+        if self.pathbar_left.text() != "Drives":
+            using = psutil.disk_usage(os.path.abspath(self.pathbar_left.text()))
+
+            total_disk_usage, free_disk_usage, used_disk_usage, percent = (
+                using.total,
+                using.free,
+                using.used,
+                using.percent,
+            )
+
+            usi = [total_disk_usage, free_disk_usage, used_disk_usage]
+
+            total_disk_usage, free_disk_usage, used_disk_usage = map(
+                lambda x: round(x / (10**9)), usi
+            )
+
+            self.label_left.setText(
+                f"Total: {total_disk_usage}GB, Free: {free_disk_usage}GB, Used: {used_disk_usage}GB"
+            )
+            self.progress_bar_left.setValue(int(percent))
 
 
 def checkforExist(dest):
