@@ -1053,139 +1053,151 @@ class Window(QtWidgets.QMainWindow):
         return [action, action1, action2]
 
     def newFolder_tool_left(self):
-        self.fileModel_left.setReadOnly(False)
-        dest = os.path.abspath(self.pathbar_left.text() + "/New folder")
-        if not os.path.exists(dest):
-            os.mkdir(dest)
-        ix = self.fileModel_left.index(dest)
-        QtCore.QTimer.singleShot(
-            0, lambda ix=ix: self.listview_left.setCurrentIndex(ix)
-        )
-        QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_left.edit(ix))
-        ix = self.fileModel_left.index(os.path.abspath(self.pathbar_left.text()))
-        self.listview_left.setCurrentIndex(ix)
+        try:
+            self.fileModel_left.setReadOnly(False)
+            dest = os.path.abspath(self.pathbar_left.text() + "/New folder")
+            if not os.path.exists(dest):
+                os.mkdir(dest)
+            ix = self.fileModel_left.index(dest)
+            QtCore.QTimer.singleShot(
+                0, lambda ix=ix: self.listview_left.setCurrentIndex(ix)
+            )
+            QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_left.edit(ix))
+            ix = self.fileModel_left.index(os.path.abspath(self.pathbar_left.text()))
+            self.listview_left.setCurrentIndex(ix)
+        except:
+            pass
 
     def newFolder_tool_right(self):
-        self.fileModel_right.setReadOnly(False)
-        dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
-        if not os.path.exists(dest):
-            os.mkdir(dest)
-        ix = self.fileModel_right.index(dest)
-        QtCore.QTimer.singleShot(
-            0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
-        )
-        QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
-        ix = self.fileModel_right.index(os.path.abspath(self.pathbar_right.text()))
-        self.listview_right.setCurrentIndex(ix)
+        try:
+            self.fileModel_right.setReadOnly(False)
+            dest = os.path.abspath(self.pathbar_right.text() + "/New folder")
+            if not os.path.exists(dest):
+                os.mkdir(dest)
+            ix = self.fileModel_right.index(dest)
+            QtCore.QTimer.singleShot(
+                0, lambda ix=ix: self.listview_right.setCurrentIndex(ix)
+            )
+            QtCore.QTimer.singleShot(0, lambda ix=ix: self.listview_right.edit(ix))
+            ix = self.fileModel_right.index(os.path.abspath(self.pathbar_right.text()))
+            self.listview_right.setCurrentIndex(ix)
+        except:
+            pass
 
     def paste_tool_left(self):
-        chech = []
-        text = (
-            "You want to insert an element?"
-            if len(self.copylist) == 1
-            else "You want to insert an elements?"
-        )
-        self.destTarg = []
-
-        chech.append(
-            os.path.abspath(
-                self.fileModel_left.filePath(
-                    self.listview_left.selectionModel().currentIndex()
-                )
+        try:
+            chech = []
+            text = (
+                "You want to insert an element?"
+                if len(self.copylist) == 1
+                else "You want to insert an elements?"
             )
-        )
-        if self.cutchecking == True and (chech[0] in self.copylist):
-            Errors.cutIn(self)
-            return
+            self.destTarg = []
 
-        msg = QMessageBox.question(
-            self,
-            "Pasting file",
-            text,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes,
-        )
-        if msg == QMessageBox.Yes:
-            for target in self.copylist:
-                if self.listview_left.selectionModel().hasSelection():
-                    destpath = self.fileModel_left.filePath(
+            chech.append(
+                os.path.abspath(
+                    self.fileModel_left.filePath(
                         self.listview_left.selectionModel().currentIndex()
                     )
-                else:
-                    destpath = self.pathbar_left.text()
-
-                destination = os.path.abspath(
-                    os.path.abspath(destpath)
-                    + "/"
-                    + QtCore.QFileInfo(target).fileName()
-                )
-                self.destTarg.extend([target, destination])
-
-            progress_dialog = ProgressDialog_Paste(self.destTarg)
-            progress_dialog.start_pasting()
-            progress_dialog.exec_()
-
-            if self.cutchecking:
-                for index in self.indexlist_left:
-                    self.fileModel_left.remove(index)
-                for index in self.indexlist_right:
-                    self.fileModel_right.remove(index)
-                self.copylist = []
-                self.cutchecking = False
-
-    def paste_tool_right(self):
-        chech = []
-        text = (
-            "You want to insert an element?"
-            if len(self.copylist) == 1
-            else "You want to insert an elements?"
-        )
-        self.destTarg = []
-
-        chech.append(
-            os.path.abspath(
-                self.fileModel_right.filePath(
-                    self.listview_right.selectionModel().currentIndex()
                 )
             )
-        )
-        if self.cutchecking == True and (chech[0] in self.copylist):
-            Errors.cutIn(self)
-            return
+            if self.cutchecking == True and (chech[0] in self.copylist):
+                Errors.cutIn(self)
+                return
 
-        msg = QMessageBox.question(
-            self,
-            "Pasting file",
-            text,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes,
-        )
-        if msg == QMessageBox.Yes:
-            for target in self.copylist:
-                if self.listview_right.selectionModel().hasSelection():
-                    destpath = self.fileModel_right.filePath(
+            msg = QMessageBox.question(
+                self,
+                "Pasting file",
+                text,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if msg == QMessageBox.Yes:
+                for target in self.copylist:
+                    if self.listview_left.selectionModel().hasSelection():
+                        destpath = self.fileModel_left.filePath(
+                            self.listview_left.selectionModel().currentIndex()
+                        )
+                    else:
+                        destpath = self.pathbar_left.text()
+
+                    destination = os.path.abspath(
+                        os.path.abspath(destpath)
+                        + "/"
+                        + QtCore.QFileInfo(target).fileName()
+                    )
+                    self.destTarg.extend([target, destination])
+
+                progress_dialog = ProgressDialog_Paste(self.destTarg)
+                progress_dialog.start_pasting()
+                progress_dialog.exec_()
+
+                if self.cutchecking:
+                    for index in self.indexlist_left:
+                        self.fileModel_left.remove(index)
+                    for index in self.indexlist_right:
+                        self.fileModel_right.remove(index)
+                    self.copylist = []
+                    self.cutchecking = False
+        except:
+            pass
+
+    def paste_tool_right(self):
+        try:
+            chech = []
+            text = (
+                "You want to insert an element?"
+                if len(self.copylist) == 1
+                else "You want to insert an elements?"
+            )
+            self.destTarg = []
+
+            chech.append(
+                os.path.abspath(
+                    self.fileModel_right.filePath(
                         self.listview_right.selectionModel().currentIndex()
                     )
-                else:
-                    destpath = self.pathbar_right.text()
-                destination = os.path.abspath(
-                    os.path.abspath(destpath)
-                    + "/"
-                    + QtCore.QFileInfo(target).fileName()
                 )
-                self.destTarg.extend([target, destination])
+            )
+            if self.cutchecking == True and (chech[0] in self.copylist):
+                Errors.cutIn(self)
+                return
 
-            progress_dialog = ProgressDialog_Paste(self.destTarg)
-            progress_dialog.start_pasting()
-            progress_dialog.exec_()
+            msg = QMessageBox.question(
+                self,
+                "Pasting file",
+                text,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if msg == QMessageBox.Yes:
+                for target in self.copylist:
+                    if self.listview_right.selectionModel().hasSelection():
+                        destpath = self.fileModel_right.filePath(
+                            self.listview_right.selectionModel().currentIndex()
+                        )
+                    else:
+                        destpath = self.pathbar_right.text()
+                    destination = os.path.abspath(
+                        os.path.abspath(destpath)
+                        + "/"
+                        + QtCore.QFileInfo(target).fileName()
+                    )
+                    self.destTarg.extend([target, destination])
 
-            if self.cutchecking:
-                for index in self.indexlist_left:
-                    self.fileModel_left.remove(index)
-                for index in self.indexlist_right:
-                    self.fileModel_right.remove(index)
-                self.copylist = []
-                self.cutchecking = False
+                progress_dialog = ProgressDialog_Paste(self.destTarg)
+                progress_dialog.start_pasting()
+                progress_dialog.exec_()
+
+                if self.cutchecking:
+                    for index in self.indexlist_left:
+                        self.fileModel_left.remove(index)
+                    for index in self.indexlist_right:
+                        self.fileModel_right.remove(index)
+                    self.copylist = []
+                    self.cutchecking = False
+        except:
+            pass
 
     def switchtheme(self):
         if self.theme == 0:
@@ -1340,213 +1352,229 @@ class Window(QtWidgets.QMainWindow):
         self.pathbar_dest(os.path.abspath(path), "right")
 
     def copyitems(self):
-        self.copylist = []
-        self.indexlist_left = []
-        self.indexlist_right = []
-        if self.listview_right.hasFocus():
-            self.selected_right = self.listview_right.selectionModel().selectedRows()
-
-            if self.cutchecking:
-                self.delegate_right = StyledItemDelegate(indexes=self.selected_right)
-                self.listview_right.setItemDelegate(self.delegate_right)
-
-            for index in self.selected_right:
-                path = os.path.abspath(
-                    self.pathbar_right.text()
-                    + "/"
-                    + self.fileModel_right.data(
-                        index, self.fileModel_right.FileNameRole
-                    )
+        try:
+            self.copylist = []
+            self.indexlist_left = []
+            self.indexlist_right = []
+            if self.listview_right.hasFocus():
+                self.selected_right = (
+                    self.listview_right.selectionModel().selectedRows()
                 )
-                self.copylist.append(path)
-                self.indexlist_right.append(index)
 
-        elif self.treeview_right.hasFocus():
-            self.selected_right = self.treeview_right.selectionModel().selectedRows()
-
-            if self.cutchecking:
-                self.delegate_right = StyledItemDelegate(indexes=self.selected_right)
-                self.treeview_right.setItemDelegate(self.delegate_right)
-
-            for index in self.selected_right:
-                path = os.path.abspath(self.pathbar_right.text())
-                self.copylist.append(path)
-                self.indexlist_right.append(index)
-
-        elif self.listview_left.hasFocus():
-            self.selected_left = self.listview_left.selectionModel().selectedRows()
-
-            if self.cutchecking:
-                self.delegate_left = StyledItemDelegate(indexes=self.selected_left)
-                self.listview_left.setItemDelegate(self.delegate_left)
-
-            for index in self.selected_left:
-                path = os.path.abspath(
-                    self.pathbar_left.text()
-                    + "/"
-                    + self.fileModel_left.data(index, self.fileModel_left.FileNameRole)
-                )
-                self.copylist.append(path)
-                self.indexlist_left.append(index)
-
-        elif self.treeview_left.hasFocus():
-            self.selected_left = self.treeview_left.selectionModel().selectedRows()
-
-            if self.cutchecking:
-                self.delegate_left = StyledItemDelegate(indexes=self.selected_left)
-                self.treeview_left.setItemDelegate(self.delegate_left)
-
-            for index in self.selected_left:
-                path = os.path.abspath(self.pathbar_left.text())
-                self.copylist.append(path)
-                self.indexlist_left.append(index)
-
-    def pasteItemPanelsAction(self):
-        chech = []
-        text = (
-            "You want to insert an element?"
-            if len(self.copylist) == 1
-            else "You want to insert an elements?"
-        )
-        self.destTarg = []
-        if self.listview_left.hasFocus():
-            chech.append(
-                os.path.abspath(
-                    self.fileModel_left.filePath(
-                        self.listview_left.selectionModel().currentIndex()
+                if self.cutchecking:
+                    self.delegate_right = StyledItemDelegate(
+                        indexes=self.selected_right
                     )
-                )
-            )
-            if self.cutchecking == True and (chech[0] in self.copylist):
-                Errors.cutIn(self)
-                return
+                    self.listview_right.setItemDelegate(self.delegate_right)
 
-            msg = QMessageBox.question(
-                self,
-                "Pasting file",
-                text,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if msg == QMessageBox.Yes:
-                for target in self.copylist:
-                    if self.listview_left.selectionModel().hasSelection():
-                        destpath = self.fileModel_left.filePath(
-                            self.listview_left.selectionModel().currentIndex()
-                        )
-                    else:
-                        destpath = self.pathbar_left.text()
-
-                    destination = os.path.abspath(
-                        os.path.abspath(destpath)
-                        + "/"
-                        + QtCore.QFileInfo(target).fileName()
-                    )
-                    self.destTarg.extend([target, destination])
-
-        elif self.treeview_left.hasFocus():
-            chech.append(
-                os.path.abspath(
-                    self.dirModel_left.filePath(
-                        self.treeview_left.selectionModel().currentIndex()
-                    )
-                )
-            )
-            if self.cutchecking == True and (chech[0] in self.copylist):
-                Errors.cutIn(self)
-                return
-
-            msg = QMessageBox.question(
-                self,
-                "Pasting file",
-                text,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if msg == QMessageBox.Yes:
-                for target in self.copylist:
-                    destination = os.path.abspath(
-                        self.pathbar_left.text()
-                        + "/"
-                        + QtCore.QFileInfo(target).fileName()
-                    )
-                    self.destTarg.extend([target, destination])
-
-        elif self.listview_right.hasFocus():
-            chech.append(
-                os.path.abspath(
-                    self.fileModel_right.filePath(
-                        self.listview_right.selectionModel().currentIndex()
-                    )
-                )
-            )
-            if self.cutchecking == True and (chech[0] in self.copylist):
-                Errors.cutIn(self)
-                return
-
-            msg = QMessageBox.question(
-                self,
-                "Pasting file",
-                text,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if msg == QMessageBox.Yes:
-                for target in self.copylist:
-                    if self.listview_right.selectionModel().hasSelection():
-                        destpath = self.fileModel_right.filePath(
-                            self.listview_right.selectionModel().currentIndex()
-                        )
-                    else:
-                        destpath = self.pathbar_right.text()
-                    destination = os.path.abspath(
-                        os.path.abspath(destpath)
-                        + "/"
-                        + QtCore.QFileInfo(target).fileName()
-                    )
-                    self.destTarg.extend([target, destination])
-
-        elif self.treeview_right.hasFocus():
-            chech.append(
-                os.path.abspath(
-                    self.dirModel_right.filePath(
-                        self.treeview_right.selectionModel().currentIndex()
-                    )
-                )
-            )
-            if self.cutchecking == True and (chech[0] in self.copylist):
-                Errors.cutIn(self)
-                return
-
-            msg = QMessageBox.question(
-                self,
-                "Pasting file",
-                text,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if msg == QMessageBox.Yes:
-                for target in self.copylist:
-                    destination = os.path.abspath(
+                for index in self.selected_right:
+                    path = os.path.abspath(
                         self.pathbar_right.text()
                         + "/"
-                        + QtCore.QFileInfo(target).fileName()
+                        + self.fileModel_right.data(
+                            index, self.fileModel_right.FileNameRole
+                        )
                     )
-                    self.destTarg.extend([target, destination])
+                    self.copylist.append(path)
+                    self.indexlist_right.append(index)
 
-        if msg == QMessageBox.Yes:
-            progress_dialog = ProgressDialog_Paste(self.destTarg)
-            progress_dialog.start_pasting()
-            progress_dialog.exec_()
+            elif self.treeview_right.hasFocus():
+                self.selected_right = (
+                    self.treeview_right.selectionModel().selectedRows()
+                )
 
-            if self.cutchecking:
-                for index in self.indexlist_left:
-                    self.fileModel_left.remove(index)
-                for index in self.indexlist_right:
-                    self.fileModel_right.remove(index)
-                self.copylist = []
-                self.cutchecking = False
-        self.refreshbar()
+                if self.cutchecking:
+                    self.delegate_right = StyledItemDelegate(
+                        indexes=self.selected_right
+                    )
+                    self.treeview_right.setItemDelegate(self.delegate_right)
+
+                for index in self.selected_right:
+                    path = os.path.abspath(self.pathbar_right.text())
+                    self.copylist.append(path)
+                    self.indexlist_right.append(index)
+
+            elif self.listview_left.hasFocus():
+                self.selected_left = self.listview_left.selectionModel().selectedRows()
+
+                if self.cutchecking:
+                    self.delegate_left = StyledItemDelegate(indexes=self.selected_left)
+                    self.listview_left.setItemDelegate(self.delegate_left)
+
+                for index in self.selected_left:
+                    path = os.path.abspath(
+                        self.pathbar_left.text()
+                        + "/"
+                        + self.fileModel_left.data(
+                            index, self.fileModel_left.FileNameRole
+                        )
+                    )
+                    self.copylist.append(path)
+                    self.indexlist_left.append(index)
+
+            elif self.treeview_left.hasFocus():
+                self.selected_left = self.treeview_left.selectionModel().selectedRows()
+
+                if self.cutchecking:
+                    self.delegate_left = StyledItemDelegate(indexes=self.selected_left)
+                    self.treeview_left.setItemDelegate(self.delegate_left)
+
+                for index in self.selected_left:
+                    path = os.path.abspath(self.pathbar_left.text())
+                    self.copylist.append(path)
+                    self.indexlist_left.append(index)
+        except:
+            pass
+
+    def pasteItemPanelsAction(self):
+        try:
+            chech = []
+            text = (
+                "You want to insert an element?"
+                if len(self.copylist) == 1
+                else "You want to insert an elements?"
+            )
+            self.destTarg = []
+            if self.listview_left.hasFocus():
+                chech.append(
+                    os.path.abspath(
+                        self.fileModel_left.filePath(
+                            self.listview_left.selectionModel().currentIndex()
+                        )
+                    )
+                )
+                if self.cutchecking == True and (chech[0] in self.copylist):
+                    Errors.cutIn(self)
+                    return
+
+                msg = QMessageBox.question(
+                    self,
+                    "Pasting file",
+                    text,
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                if msg == QMessageBox.Yes:
+                    for target in self.copylist:
+                        if self.listview_left.selectionModel().hasSelection():
+                            destpath = self.fileModel_left.filePath(
+                                self.listview_left.selectionModel().currentIndex()
+                            )
+                        else:
+                            destpath = self.pathbar_left.text()
+
+                        destination = os.path.abspath(
+                            os.path.abspath(destpath)
+                            + "/"
+                            + QtCore.QFileInfo(target).fileName()
+                        )
+                        self.destTarg.extend([target, destination])
+
+            elif self.treeview_left.hasFocus():
+                chech.append(
+                    os.path.abspath(
+                        self.dirModel_left.filePath(
+                            self.treeview_left.selectionModel().currentIndex()
+                        )
+                    )
+                )
+                if self.cutchecking == True and (chech[0] in self.copylist):
+                    Errors.cutIn(self)
+                    return
+
+                msg = QMessageBox.question(
+                    self,
+                    "Pasting file",
+                    text,
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                if msg == QMessageBox.Yes:
+                    for target in self.copylist:
+                        destination = os.path.abspath(
+                            self.pathbar_left.text()
+                            + "/"
+                            + QtCore.QFileInfo(target).fileName()
+                        )
+                        self.destTarg.extend([target, destination])
+
+            elif self.listview_right.hasFocus():
+                chech.append(
+                    os.path.abspath(
+                        self.fileModel_right.filePath(
+                            self.listview_right.selectionModel().currentIndex()
+                        )
+                    )
+                )
+                if self.cutchecking == True and (chech[0] in self.copylist):
+                    Errors.cutIn(self)
+                    return
+
+                msg = QMessageBox.question(
+                    self,
+                    "Pasting file",
+                    text,
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                if msg == QMessageBox.Yes:
+                    for target in self.copylist:
+                        if self.listview_right.selectionModel().hasSelection():
+                            destpath = self.fileModel_right.filePath(
+                                self.listview_right.selectionModel().currentIndex()
+                            )
+                        else:
+                            destpath = self.pathbar_right.text()
+                        destination = os.path.abspath(
+                            os.path.abspath(destpath)
+                            + "/"
+                            + QtCore.QFileInfo(target).fileName()
+                        )
+                        self.destTarg.extend([target, destination])
+
+            elif self.treeview_right.hasFocus():
+                chech.append(
+                    os.path.abspath(
+                        self.dirModel_right.filePath(
+                            self.treeview_right.selectionModel().currentIndex()
+                        )
+                    )
+                )
+                if self.cutchecking == True and (chech[0] in self.copylist):
+                    Errors.cutIn(self)
+                    return
+
+                msg = QMessageBox.question(
+                    self,
+                    "Pasting file",
+                    text,
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                if msg == QMessageBox.Yes:
+                    for target in self.copylist:
+                        destination = os.path.abspath(
+                            self.pathbar_right.text()
+                            + "/"
+                            + QtCore.QFileInfo(target).fileName()
+                        )
+                        self.destTarg.extend([target, destination])
+
+            if msg == QMessageBox.Yes:
+                progress_dialog = ProgressDialog_Paste(self.destTarg)
+                progress_dialog.start_pasting()
+                progress_dialog.exec_()
+
+                if self.cutchecking:
+                    for index in self.indexlist_left:
+                        self.fileModel_left.remove(index)
+                    for index in self.indexlist_right:
+                        self.fileModel_right.remove(index)
+                    self.copylist = []
+                    self.cutchecking = False
+            self.refreshbar()
+        except:
+            pass
 
     def renameItemPanelsAction(self):
         if self.listview_left.hasFocus():
@@ -1730,83 +1758,95 @@ class Window(QtWidgets.QMainWindow):
             pass
 
     def createZipFromItem(self):
-        if self.listview_left.hasFocus():
-            if self.listview_left.selectionModel().hasSelection():
-                index = self.listview_left.selectionModel().currentIndex()
-                path = self.fileModel_left.fileInfo(index).path()
-                fname = self.fileModel_left.fileInfo(index).fileName()
-                self.copyitems()
-                if self.fileModel_left.fileInfo(index).isDir():
-                    pass
-                else:
-                    h = ""
-                    for i in range(len(fname)):
-                        if fname[i] != ".":
-                            h += fname[i]
-                        else:
-                            break
-                    fname = h
-                target, _ = QtWidgets.QFileDialog.getSaveFileName(
-                    self, "Save as...", path + "/" + fname + ".zip", "zip files (*.zip)"
-                )
-                if target != "":
-                    zipText = ""
-                    with ZipFile(target, "w") as myzip:
-                        for file in self.copylist:
-                            fname = os.path.basename(file)
-                            myzip.write(file, fname)
-        elif self.listview_right.hasFocus():
-            if self.listview_right.selectionModel().hasSelection():
-                index = self.listview_right.selectionModel().currentIndex()
-                path = self.fileModel_right.fileInfo(index).path()
-                fname = self.fileModel_right.fileInfo(index).fileName()
-                self.copyitems()
-                if self.fileModel_left.fileInfo(index).isDir():
-                    pass
-                else:
-                    h = ""
-                    for i in range(len(fname)):
-                        if fname[i] != ".":
-                            h += fname[i]
-                        else:
-                            break
-                    fname = h
-                target, _ = QtWidgets.QFileDialog.getSaveFileName(
-                    self, "Save as...", path + "/" + fname + ".zip", "zip files (*.zip)"
-                )
-                if target != "":
-                    zipText = ""
-                    with ZipFile(target, "w") as myzip:
-                        for file in self.copylist:
-                            fname = os.path.basename(file)
-                            myzip.write(file, fname)
-        self.copylist = []
+        try:
+            if self.listview_left.hasFocus():
+                if self.listview_left.selectionModel().hasSelection():
+                    index = self.listview_left.selectionModel().currentIndex()
+                    path = self.fileModel_left.fileInfo(index).path()
+                    fname = self.fileModel_left.fileInfo(index).fileName()
+                    self.copyitems()
+                    if self.fileModel_left.fileInfo(index).isDir():
+                        pass
+                    else:
+                        h = ""
+                        for i in range(len(fname)):
+                            if fname[i] != ".":
+                                h += fname[i]
+                            else:
+                                break
+                        fname = h
+                    target, _ = QtWidgets.QFileDialog.getSaveFileName(
+                        self,
+                        "Save as...",
+                        path + "/" + fname + ".zip",
+                        "zip files (*.zip)",
+                    )
+                    if target != "":
+                        zipText = ""
+                        with ZipFile(target, "w") as myzip:
+                            for file in self.copylist:
+                                fname = os.path.basename(file)
+                                myzip.write(file, fname)
+            elif self.listview_right.hasFocus():
+                if self.listview_right.selectionModel().hasSelection():
+                    index = self.listview_right.selectionModel().currentIndex()
+                    path = self.fileModel_right.fileInfo(index).path()
+                    fname = self.fileModel_right.fileInfo(index).fileName()
+                    self.copyitems()
+                    if self.fileModel_left.fileInfo(index).isDir():
+                        pass
+                    else:
+                        h = ""
+                        for i in range(len(fname)):
+                            if fname[i] != ".":
+                                h += fname[i]
+                            else:
+                                break
+                        fname = h
+                    target, _ = QtWidgets.QFileDialog.getSaveFileName(
+                        self,
+                        "Save as...",
+                        path + "/" + fname + ".zip",
+                        "zip files (*.zip)",
+                    )
+                    if target != "":
+                        zipText = ""
+                        with ZipFile(target, "w") as myzip:
+                            for file in self.copylist:
+                                fname = os.path.basename(file)
+                                myzip.write(file, fname)
+            self.copylist = []
+        except:
+            pass
 
     def unzipHere(self):
-        if self.listview_left.hasFocus():
-            if self.listview_left.selectionModel().hasSelection():
-                file_index = self.listview_left.selectionModel().currentIndex()
-                file_path = self.fileModel_left.fileInfo(file_index).filePath()
-                ext = os.path.splitext(file_path)
-                folder_path = (
-                    self.pathbar_left.text()
-                    + "/"
-                    + os.path.basename(file_path).replace(ext[1], "")
-                )
-                with ZipFile(file_path, "r") as zipObj:
-                    zipObj.extractall(folder_path)
-        elif self.listview_right.hasFocus():
-            if self.listview_right.selectionModel().hasSelection():
-                file_index = self.listview_right.selectionModel().currentIndex()
-                file_path = self.fileModel_right.fileInfo(file_index).filePath()
-                ext = os.path.splitext(file_path)
-                folder_path = (
-                    self.pathbar_right.text()
-                    + "/"
-                    + os.path.basename(file_path).replace(ext[1], "")
-                )
-                with ZipFile(file_path, "r") as zipObj:
-                    zipObj.extractall(folder_path)
+        try:
+            if self.listview_left.hasFocus():
+                if self.listview_left.selectionModel().hasSelection():
+                    file_index = self.listview_left.selectionModel().currentIndex()
+                    file_path = self.fileModel_left.fileInfo(file_index).filePath()
+                    ext = os.path.splitext(file_path)
+                    folder_path = (
+                        self.pathbar_left.text()
+                        + "/"
+                        + os.path.basename(file_path).replace(ext[1], "")
+                    )
+                    with ZipFile(file_path, "r") as zipObj:
+                        zipObj.extractall(folder_path)
+            elif self.listview_right.hasFocus():
+                if self.listview_right.selectionModel().hasSelection():
+                    file_index = self.listview_right.selectionModel().currentIndex()
+                    file_path = self.fileModel_right.fileInfo(file_index).filePath()
+                    ext = os.path.splitext(file_path)
+                    folder_path = (
+                        self.pathbar_right.text()
+                        + "/"
+                        + os.path.basename(file_path).replace(ext[1], "")
+                    )
+                    with ZipFile(file_path, "r") as zipObj:
+                        zipObj.extractall(folder_path)
+        except:
+            pass
 
     def cancel(self):
         self.delegate_left = StyledItemDelegate_cancel(indexes=self.selected_left)
@@ -1826,67 +1866,74 @@ class Window(QtWidgets.QMainWindow):
         self.copyitems()
 
     def deleteFile(self):
-        msg = QMessageBox.question(
-            self,
-            "Deleting file",
-            f"""Do you want to delete an element?""",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes,
-        )
-        if msg == QMessageBox.Yes:
-            if self.listview_left.hasFocus():
-                index = self.listview_left.selectionModel().selectedIndexes()
-                for delFile in self.listview_left.selectionModel().selectedIndexes():
-                    path = os.path.abspath(
-                        self.fileModel_left.fileInfo(delFile).absoluteFilePath()
-                    )
+        try:
+            msg = QMessageBox.question(
+                self,
+                "Deleting file",
+                f"""Do you want to delete an element?""",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if msg == QMessageBox.Yes:
+                if self.listview_left.hasFocus():
+                    index = self.listview_left.selectionModel().selectedIndexes()
+                    for (
+                        delFile
+                    ) in self.listview_left.selectionModel().selectedIndexes():
+                        path = os.path.abspath(
+                            self.fileModel_left.fileInfo(delFile).absoluteFilePath()
+                        )
+
+                        if path in self.copylist:
+                            self.copylist.remove(path)
+                            self.cancel()
+
+                    progress_dialog = ProgressDialog(self.fileModel_left, index)
+                    progress_dialog.start_deletion()
+                    progress_dialog.exec_()
+
+                elif self.treeview_left.hasFocus():
+                    index = self.treeview_left.selectionModel().selectedIndexes()
+                    path = os.path.abspath(self.pathbar_left.text())
+                    if path in self.copylist:
+                        self.copylist.remove(path)
+                        self.cancel()
+
+                    progress_dialog = ProgressDialog(self.dirModel_left, index)
+                    progress_dialog.start_deletion()
+                    progress_dialog.exec_()
+
+                elif self.listview_right.hasFocus():
+                    index = self.listview_right.selectionModel().selectedIndexes()
+                    for (
+                        delFile
+                    ) in self.listview_right.selectionModel().selectedIndexes():
+                        path = os.path.abspath(
+                            self.fileModel_right.fileInfo(delFile).absoluteFilePath()
+                        )
+
+                        if path in self.copylist:
+                            self.copylist.remove(path)
+                            self.cancel()
+
+                    progress_dialog = ProgressDialog(self.fileModel_right, index)
+                    progress_dialog.start_deletion()
+                    progress_dialog.exec_()
+
+                elif self.treeview_right.hasFocus():
+                    index = self.treeview_right.selectionModel().selectedIndexes()
+                    path = os.path.abspath(self.pathbar_right.text())
 
                     if path in self.copylist:
                         self.copylist.remove(path)
                         self.cancel()
 
-                progress_dialog = ProgressDialog(self.fileModel_left, index)
-                progress_dialog.start_deletion()
-                progress_dialog.exec_()
-
-            elif self.treeview_left.hasFocus():
-                index = self.treeview_left.selectionModel().selectedIndexes()
-                path = os.path.abspath(self.pathbar_left.text())
-                if path in self.copylist:
-                    self.copylist.remove(path)
-                    self.cancel()
-
-                progress_dialog = ProgressDialog(self.dirModel_left, index)
-                progress_dialog.start_deletion()
-                progress_dialog.exec_()
-
-            elif self.listview_right.hasFocus():
-                index = self.listview_right.selectionModel().selectedIndexes()
-                for delFile in self.listview_right.selectionModel().selectedIndexes():
-                    path = os.path.abspath(
-                        self.fileModel_right.fileInfo(delFile).absoluteFilePath()
-                    )
-
-                    if path in self.copylist:
-                        self.copylist.remove(path)
-                        self.cancel()
-
-                progress_dialog = ProgressDialog(self.fileModel_right, index)
-                progress_dialog.start_deletion()
-                progress_dialog.exec_()
-
-            elif self.treeview_right.hasFocus():
-                index = self.treeview_right.selectionModel().selectedIndexes()
-                path = os.path.abspath(self.pathbar_right.text())
-
-                if path in self.copylist:
-                    self.copylist.remove(path)
-                    self.cancel()
-
-                progress_dialog = ProgressDialog(self.dirModel_right, index)
-                progress_dialog.start_deletion()
-                progress_dialog.exec_()
-        self.refreshbar()
+                    progress_dialog = ProgressDialog(self.dirModel_right, index)
+                    progress_dialog.start_deletion()
+                    progress_dialog.exec_()
+            self.refreshbar()
+        except:
+            pass
 
     def goUp_click(self):
         if self.upbutton_left.hasFocus():
@@ -2570,8 +2617,14 @@ QProgressBar {
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    icon = QtGui.QIcon()
+    icon.addPixmap(QtGui.QPixmap("src/setting.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+
+    app.setWindowIcon(icon)
+
     MainWindow = Window()
     MainWindow.show()
-
+    MainWindow.setWindowIcon(icon)
     MainWindow.setWindowTitle("FileManager")
     sys.exit(app.exec_())
